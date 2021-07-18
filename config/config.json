@@ -1,0 +1,24 @@
+{
+  "development": {
+    "username": "lqguaawh",
+    "password": "CxXvoYBX9_2uV5n2cn6R4w99DZuop7UT",
+    "database": "lqguaawh",
+    "host": "ziggy.db.elephantsql.com",
+    "dialect": "postgres",
+    "timezone": "+01:00"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "chapel-admin",
+    "password": "$chapel%hill+",
+    "database": "chapel-hill-live",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}

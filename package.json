@@ -1,0 +1,50 @@
+{
+  "name": "chapel-hill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "swagger-autogen": "node swagger.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "bcryptjs": "^2.4.3",
+    "chd-session-mgt": "^1.0.0",
+    "cloudinary": "^1.25.0",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-rate-limit": "^5.2.6",
+    "express-xml-bodyparser": "^0.3.0",
+    "formidable": "^1.2.2",
+    "helmet": "^4.4.1",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "mongoose": "^5.11.17",
+    "morgan": "^1.10.0",
+    "node-cron": "^2.0.3",
+    "nodemailer": "^6.4.18",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.5.0",
+    "string-similarity": "^4.0.4",
+    "swagger-autogen": "^2.10.2",
+    "swagger-ui-express": "^4.1.6",
+    "underscore": "^1.12.0",
+    "xml": "^1.0.1",
+    "xml-js": "^1.6.11",
+    "xmlbuilder": "^15.1.1"
+  },
+  "engines": {
+    "node": ">=12.16.1"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.2.0"
+  }
+}
