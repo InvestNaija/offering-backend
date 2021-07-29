@@ -22,6 +22,8 @@ const verifyme = require('../../config/verifyme');
 const accessgateway = require('../../config/accessgateway');
 const KycDocuments = db.kycDocuments;
 const path = require('path');
+const {Op} = require('sequelize');
+require('dotenv').config();
 
 
 exports.signup = async (req, res, next) => {
@@ -151,7 +153,7 @@ exports.forgotPasswordCustomer = async (req, res, next) => {
         let str = crypto.randomBytes(16).toString("hex");
         const token = await Token.create({token: str, customerId: user.id});
         if (!token) return next(new AppError('error creating password reset', 500));
-        let url = `http://chapelhill.flexi.ng/auth/reset-password?token-details=${token.token}`;
+        let url = `${process.env.application_base_url}/auth/reset-password?token-details=${token.token}`;
         let opts = {
             email: user.email,
             subject: 'Password Reset',
