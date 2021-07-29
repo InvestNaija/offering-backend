@@ -82,7 +82,7 @@ exports.signup = async (req, res, next) => {
         res.locals.resp = resp;
         let otp = helper.generateOTCode(6, false);
         const token = await Token.create({token: otp, customerId: customer.id});
-        let url = 'http://chapelhill.flexi.ng/auth/verify-otp'
+        let url = `${process.env.FRONTEND_URL}/auth/verify-otp`
         // ***** notification with otp sent to customer
         let opts = {
             email: customer.email,
@@ -153,7 +153,7 @@ exports.forgotPasswordCustomer = async (req, res, next) => {
         let str = crypto.randomBytes(16).toString("hex");
         const token = await Token.create({token: str, customerId: user.id});
         if (!token) return next(new AppError('error creating password reset', 500));
-        let url = `${process.env.application_base_url}/auth/reset-password?token-details=${token.token}`;
+        let url = `${process.env.FRONTEND_URL}/auth/reset-password?token-details=${token.token}`;
         let opts = {
             email: user.email,
             subject: 'Password Reset',
