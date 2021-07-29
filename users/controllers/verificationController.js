@@ -27,7 +27,7 @@ exports.verifyBVN = async (req, res, next) => {
 
         if (response.status !== 'success') return next(new AppError(response.message, response.statusCode));
         let formattedDOB = moment(dob).format('DDMMYYYY');
-        let formattedBVNDate = response.data.birthdate.replaceAll('-', '');
+        let formattedBVNDate = response.data.birthdate.replace(/-/g, '');
 
         console.log(formattedBVNDate, formattedDOB);
 
