@@ -56,11 +56,11 @@ exports.initializeDollarTransaction = async (user, amount, redirect_url, tx_ref,
             name: user.firstName + ' ' + user.lastName
         };
 
-        data.customizations = {
-            title: "Invest Naija Funding",
-            description: "Invest Naija Funding",
-            logo: ""
-        };
+//         data.customizations = {
+//             title: "Invest Naija Funding",
+//             description: "Invest Naija Funding",
+//             logo: ""
+//         };
 
         // pass sub account id if sub account is defined
         if (subaccountId) {
