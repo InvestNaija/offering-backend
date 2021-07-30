@@ -175,7 +175,7 @@ exports.expressInterest = async (req, res, next) => {
         let reservation;
         if (asset.openForPurchase) {
             // let description = 'Shares Purchase';
-            // let callback_url = 'https://chapel-hill-be.herokuapp.com/api/v1/transactions/shares/credit/success';
+            // let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/shares/credit/success`;
             reservation = await this.reserveAsset(user, asset, amount, units, brokerId);
             if (!reservation) return next(new AppError('Error making reservation', 500));
             // const response = await transaction.initiateChargeCard(user, amount, description, reservation.id, callback_url, brokerId);
@@ -270,7 +270,7 @@ exports.payForReservation = async (req, res, next) => {
         let amount = reservation.amount;
         let description = 'Shares Purchase';
         if (gateway === 'flutterwave') {
-            let callback_url = 'https://chapel-hill-be.herokuapp.com/api/v1/transactions/shares/credit/success';
+            let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/shares/credit/success`;
 
             // check if it's dollar payment and process with dollar method
             if (reservation.asset.currency === 'USD') {
@@ -317,7 +317,7 @@ exports.payForReservation = async (req, res, next) => {
             };
             const response = await transaction.tokenizedPayment(reservation.customer.dataValues, cardDetail, billTo, amount, reservation.id, brokerId, description);
             if (response !== 'success') return next(new AppError('Error processing transaction', 500));
-            res.redirect('https://chapelhill.flexi.ng/user/dashboard/transactions/');
+            res.redirect('${process.env.FRONTEND_URL}/user/dashboard/transactions/');
             let resp = {
                 code: 200,
                 status: "success",
