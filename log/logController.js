@@ -27,7 +27,7 @@ exports.logResponse = async(req, res, next) => {
         if(!resp) return next();
         let data = {};
         data.responseCode = resp.code;
-        // if(resp.data) data.responseBody = JSON.stringify(resp.data);
+        if(resp.data) data.responseBody = JSON.stringify(resp.data);
         if(resp.message) data.responseMessage = resp.message;
         await log.updateOne(data);
         console.log('response logged');
