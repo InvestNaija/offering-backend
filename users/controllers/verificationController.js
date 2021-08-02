@@ -198,3 +198,32 @@ exports.verifyNUBAN = async (req, res, next) => {
         return next(error);
     }
 }
+
+exports.getBVNDetails = async (req, res, next) => {
+    try {
+        let bvn = req.params.bvn;
+
+        const response = await verifyme.verifyBVN(bvn);
+
+        if (!response) {
+            return next(new AppError('BVN details not found', 404));
+        }
+
+        if (response.status !== 'success') {
+            return next(new AppError(response.message, response.statusCode));
+        }
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            data: response.data
+        };
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Error from GetBVNDetails: ', error);
+        return next(error);
+    }
+}

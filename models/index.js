@@ -122,16 +122,6 @@ db.kycDocuments.belongsTo(db.customers, {
     as: "customer"
 })
 
-db.bvnData.belongsTo(db.customers, {
-    foreignKey: "customerId",
-    as: "customer"
-})
-
-db.bvnData.belongsTo(db.admins, {
-    foreignKey: "adminId",
-    as: "admin"
-})
-
 db.sequelize.authenticate().then(() => console.log('PstgrsDb connected....')).catch(err => console.log('Error connecting to pstgrsDb...', err))
 
 module.exports = db;

@@ -3,6 +3,11 @@ const AppError = require('./appError');
 require('dotenv').config();
 const db = require('../models/index');
 const BvnData = db.bvnData;
+const Customer = db.customers;
+const Admin = db.admins;
+const { Op } = require('sequelize');
+const moment = require("moment");
+const { empty } = require('uuidv4');
 
 const getHeaders = {
     'Authorization': `Bearer ${process.env.VERIFYME_KEY}`
@@ -45,13 +50,14 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
                firstname: bvnExists.firstName,
                middlename: bvnExists.middleName,
                lastname: bvnExists.lastName,
-               email,
+               email: bvnExists.email,
                phone: bvnExists.phoneNumber,
-               image,
-               birthdate: bvnExists.dateOfBirth
+               image: bvnExists.image,
+               birthdate: moment(bvnExists.dateOfBirth).format('DD-MM-YYYY')
            };
 
            res.data = bvndata;
+           res.status = 'success';
 
            return res;
         }
@@ -78,23 +84,42 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
             data: JSON.stringify(body)
         });
 
-        // data to save the the database.
-        let newBvn = {
-            bvn,
-            firstName: response.data.data.firstname,
-            middleName: response.data.data.middlename,
-            lastName: response.data.data.lastname,
-            email: response.data.data.email,
-            phoneNumber: response.data.data.phone,
-            dateOfBirth: response.data.data.birthdate,
-            image: response.data.data.image
-        };
+        if (response) {
+            const customer = await Customer.findOne({
+                where: {
+                    [Op.or]: [{phone: response.data.data.phone}, {firstName: response.data.data.firstname},
+                        {lastName: response.data.data.lastname}]
+                }
+            });
 
-        // save bvn data to database
-        const bvnCreated = await BvnData.create(newBvn);
+            const admin = await Admin.findOne({
+                where: {
+                    [Op.or]: [{phone: response.data.data.phone}, {firstName: response.data.data.firstname},
+                        {lastName: response.data.data.lastname}]
+                }
+            });
 
-        if (!bvnCreated) {
-            console.error('Failed to store BVN data');
+            // data to save the the database.
+            let newBvn = {
+                bvn,
+                firstName: response.data.data.firstname,
+                middleName: response.data.data.middlename,
+                lastName: response.data.data.lastname,
+                email: response.data.data.email,
+                phoneNumber: response.data.data.phone,
+                dateOfBirth: moment(response.data.data.birthdate, 'DD-MM-YYYY').format('YYYY-MM-DD hh:mm:ss'),
+                image: response.data.data.photo,
+                customerId: customer ? customer.id : empty(),
+                adminId: admin ? admin.id : empty()
+            };
+
+
+            // save bvn data to database
+            const bvnCreated = await BvnData.create(newBvn);
+
+            if (!bvnCreated) {
+                console.error('Failed to store BVN data');
+            }
         }
 
         res = response.data;

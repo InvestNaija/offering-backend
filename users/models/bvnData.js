@@ -37,8 +37,11 @@ module.exports = (sequelize, Sequelize) => {
         },
 
         image: {
-            type: Sequelize.STRING
+            type: Sequelize.TEXT
         }
+    }, {
+        paranoid: true,
+        timestamps: true
     })
 
     BvnData.prototype.toJSON = function () {
