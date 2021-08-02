@@ -46,7 +46,13 @@ module.exports = (sequelize, Sequelize) => {
       
         delete values.password;
         return values;
-      }
+    }
+
+    Admin.associate = (models) => {
+        Admin.hasOne(models.bvnData, {
+            as: 'bvnData'
+        })
+    }
     
     return Admin;
   };

@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^16.4.10",
     "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "chd-session-mgt": "^1.0.0",

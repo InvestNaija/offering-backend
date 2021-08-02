@@ -1,6 +1,8 @@
 const axios = require('axios').default;
 const AppError = require('./appError');
 require('dotenv').config();
+const db = require('../models/index');
+const BvnData = db.bvnData;
 
 const getHeaders = {
     'Authorization': `Bearer ${process.env.VERIFYME_KEY}`
@@ -33,6 +35,27 @@ exports.verifyNIN = async(nin, firstname, lastname) => {
 
 exports.verifyBVN = async (bvn, firstname, lastname) => {
     try {
+        const bvnExists = await BvnData.findOne({where: {bvn}});
+
+        let res = {};
+
+        if (bvnExists) {
+           let bvndata = {
+               bvn,
+               firstname: bvnExists.firstName,
+               middlename: bvnExists.middleName,
+               lastname: bvnExists.lastName,
+               email,
+               phone: bvnExists.phoneNumber,
+               image,
+               birthdate: bvnExists.dateOfBirth
+           };
+
+           res.data = bvndata;
+
+           return res;
+        }
+        
         if(!firstname) {
             firstname = 'firstname';
         }
@@ -55,7 +78,27 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
             data: JSON.stringify(body)
         });
 
-        return response.data;
+        // data to save the the database.
+        let newBvn = {
+            bvn,
+            firstName: response.data.data.firstname,
+            middleName: response.data.data.middlename,
+            lastName: response.data.data.lastname,
+            email: response.data.data.email,
+            phoneNumber: response.data.data.phone,
+            dateOfBirth: response.data.data.birthdate,
+            image: response.data.data.image
+        };
+
+        // save bvn data to database
+        const bvnCreated = await BvnData.create(newBvn);
+
+        if (!bvnCreated) {
+            console.error('Failed to store BVN data');
+        }
+
+        res = response.data;
+        return res;
     }
     catch (error) {
         console.error(error);

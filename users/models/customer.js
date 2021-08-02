@@ -224,6 +224,10 @@ module.exports = (sequelize, Sequelize) => {
         Customer.hasMany(models.kycDocuments, {
             as: 'kycDocuments'
         })
+
+        Customer.hasOne(models.bvnData, {
+            as: 'bvnData'
+        })
     }
   
     return Customer;
