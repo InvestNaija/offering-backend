@@ -147,13 +147,20 @@ exports.resendOTP = async (req, res, next) => {
 
 exports.forgotPasswordCustomer = async (req, res, next) => {
     try {
-        let {email} = req.body;
+        let {email, baseUrl} = req.body;
+        let url = "";
         const user = await Customer.findOne({where: {email}});
         if (!user) return next(new AppError('user not found.', 404));
         let str = crypto.randomBytes(16).toString("hex");
         const token = await Token.create({token: str, customerId: user.id});
         if (!token) return next(new AppError('error creating password reset', 500));
-        let url = `${process.env.FRONTEND_URL}/auth/reset-password?token-details=${token.token}`;
+
+        if (baseUrl) {
+            url = `${baseUrl}/auth/reset-password?token-details=${token.token}`;
+        } else {
+            url = `${process.env.FRONTEND_URL}/auth/reset-password?token-details=${token.token}`;
+        }
+
         let opts = {
             email: user.email,
             subject: 'Password Reset',
