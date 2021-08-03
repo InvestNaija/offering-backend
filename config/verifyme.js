@@ -81,10 +81,11 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
             url,
             method: 'POST',
             headers: postHeaders,
+            timeout: 6000,
             data: JSON.stringify(body)
         });
 
-        if (response) {
+        if (response.status == 201) {
             const customer = await Customer.findOne({
                 where: {
                     [Op.or]: [{phone: response.data.data.phone}, {firstName: response.data.data.firstname},
