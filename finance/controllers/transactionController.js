@@ -12,6 +12,7 @@ const sendEmail = require('../../config/email');
 const {Op} = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils')
+const { getPagination, getPagingData } = require('../../config/pagination');
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -183,17 +184,38 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
     try {
-        const transactions = await Transaction.findAll({
+        let {page, size} = req.query;
+        let transactions = {};
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
+
+        transactions = await Transaction.findAndCountAll({
+            limit,
+            offset,
+            distinct: true,
             include: ['customer'], order: [
                 ['createdAt', 'DESC']
             ]
         });
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
+
         let resp = {
             code: 200,
             status: "success",
             message: 'All transactions fetched',
-            data: transactions
-        }
+            data,
+            totalItems,
+            totalPages,
+            currentPage
+        };
+
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
         return next();
@@ -204,10 +226,9 @@ exports.getAll = async (req, res, next) => {
 
 exports.getMyTransactions = async (req, res, next) => {
     try {
-
         let customerId = req.user.id;
         let transactions = [];
-        let {channel, source, start, end, type} = req.query;
+        let {channel, source, start, end, type, page, size} = req.query;
 
         let query = {
             where: {

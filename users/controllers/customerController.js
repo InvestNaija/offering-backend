@@ -302,13 +302,20 @@ exports.changePassword = async (req, res, next) => {
 exports.edit = async (req, res, next) => {
     try {
         let customerId = req.user.id;
-        let request = ['address', 'description', 'phone', 'twitter', 'facebook', 'linkedIn', 'youtube', 'website'];
+        let request = ['address', 'description', 'phone', 'twitter', 'facebook', 'linkedIn',
+            'youtube', 'website', 'placeOfBirth'];
         let data = _.pick(req.body, request);
+        data.mothersMaidenName = req.body.motherMaidenName;
+
         await Customer.update(data, {where: {id: customerId}});
+
+        let customer = await Customer.findByPk(customerId);
+
         let resp = {
             code: 200,
             status: 'success',
-            message: 'Customer profile update success.'
+            message: 'Customer profile update success.',
+            data: customer
         }
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
