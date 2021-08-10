@@ -92,7 +92,8 @@ exports.verifyCSCS = async (req, res, next) => {
         const user = await Customer.findByPk(userId);
         if (!user) return next(new AppError('user not found.', 404));
         const response = await cscsAPI.verifyCSCS(cscsNo);
-        /*if(response.ResponseCode != 200) return next(new AppError('CSCS Number not valid', 404));
+
+        if(response.ResponseCode != 200) return next(new AppError('CSCS Number not valid', 404));
         if(!response) return next(new AppError('Error verifying CSCS', 500));
         let fullName = `${user.firstName} ${user.lastName} ${user.middleName}`;
         fullName = fullName.toUpperCase();
@@ -100,7 +101,7 @@ exports.verifyCSCS = async (req, res, next) => {
         let percentageCorrect = compareResult * 100;
         console.log(percentageCorrect)
         if(percentageCorrect < 73) return next(new AppError('invalid cscs number.', 400));
-        */
+
         await Customer.update({
             cscsVerified: true,
             //cscs: response.CscsNo
