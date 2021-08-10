@@ -18,4 +18,6 @@ router.post('/customers/payment-request', auth.mtnAuth, xmlBuilder.paymentReques
 // router.post('/customers/create-cscs', auth.mtnAuth, customer.createCSCSAccount)
 
 router.post('/customers/create-new', auth.momoAuth, customer.signupViaMTNWithoutVerifications)
+router.post('/customers/first-step', auth.momoAuth, customer.firstStepVerification)
+
 module.exports = router;

@@ -1210,4 +1210,65 @@ exports.miniSignup = async (req, res, next) => {
     }
 }
 
+exports.firstStepVerification = async (req, res, next) => {
+    try {
+        let {bvn, cscsNo, dob} = req.body;
+        let bvnResponse = "";
+        let cscsResponse = "";
+
+        // verify bvn
+        const response = await verifyme.verifyBVN(bvn);
+
+        if (!response) {
+            bvnResponse = "Response was not received from BVN endpoint";
+        } else if (response.status !== "success") {
+            bvnResponse = response.message ? response.message : "BVN request failed with unknown error";
+        } else {
+            let formattedDob = moment(dob, 'DD-MM-YYYY').format('DDMMYYYY');
+            let formattedBvnDate = response.data.birthdate.replace(/-/g, '');
+
+            if (formattedDob !== formattedBvnDate) {
+                bvnResponse = 'Entered date of birth does not match BVN details';
+            } else {
+                const firstName = response.data.firstname ? response.data.firstname : "";
+                const middleName = response.data.middlename ? response.data.middlename : "";
+                const lastName = response.data.lastname ? response.data.lastname : "";
+                bvnResponse = `${firstName} ${middleName} ${lastName}`;
+            }
+        }
+
+
+        // verify cscs
+        const cscsVerification = await cscs.verifyCSCS(cscsNo);
+
+        if (!cscsVerification) {
+            cscsResponse = 'Error verifying CSCS';
+        } else if (cscsVerification.ResponseCode != 200) {
+            cscsResponse = 'CSCS Number is not valid';
+        } else {
+            const cscsAccountName = cscsVerification.AccountName ? cscsVerification.AccountName : "Account Name not found";
+            cscsResponse = `${cscsAccountName}`;
+        }
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Successful First Step Verification',
+            data: {
+                bvn,
+                bvnResponse,
+                cscsNo,
+                cscsResponse
+            }
+        };
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error('First Step Verification faile with Error: ', err);
+        return next(err);
+    }
+}
+
 
