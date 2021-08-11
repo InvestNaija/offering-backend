@@ -36,9 +36,10 @@ exports.transactionRequest = async (req, res, next) => {
     }
 }
 
-exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference, source, channel) => {
+exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference, source, channel, momoAgentId= null, module = null) => {
     try {
         let transactionReference = help.generateOTCode(20, true);
+
         let tx = {
             reference: transactionReference,
             description,
@@ -49,6 +50,15 @@ exports.createTransaction = async (description, amount, type, user, brokerId, re
             source,
             channel
         }
+
+        if(momoAgentId) {
+            tx.momoAgentId = momoAgentId;
+        }
+
+        if (module) {
+            tx.module = module;
+        }
+
         if (reservationId) tx.reservation = reservationId;
         if (brokerId) tx.brokerId = brokerId;
         const trans = await Transaction.create(tx);
