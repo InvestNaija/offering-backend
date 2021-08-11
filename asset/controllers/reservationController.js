@@ -21,17 +21,26 @@ exports.reserveAssetMTN = async (req, res, next) => {
         let errorId = helper.generateOTCode(6, false);
         let {amount, transactionid, accountholderid} = req.body;
 
-        accountholderid = accountholderid.slice(3, 13);
+        if(!module) {
+            module = 'MTN e-Offering';
+        }
+
+        // check if agent id was passed
+        // if (accountholderid) {
+        //     accountholderid = accountholderid.slice(3, 13);
+        // } else {
+        //     accountholderid = null;
+        // }
+
+        if(!accountholderid) {
+            accountholderid = null;
+        }
+
         let msisdn = req.body.receivingfri;
         let pruned = msisdn.slice(4, 17);
         pruned = pruned.substring(3);
         pruned = `0${pruned}`;
         console.log(pruned)
-
-        // check if agent id was passed
-        if (!accountholderid) {
-            accountholderid = null;
-        }
 
         const user = await Customer.findOne({where: {phone: pruned}});
         if (!user) {
@@ -71,7 +80,7 @@ exports.reserveAssetMTN = async (req, res, next) => {
         }
         let description = 'Payment Request via MTN';
         const tx = await transaction.createTransaction(description, amount, 'debit', user, null,
-            reservation.id, transactionid, utils.SOURCE.EIPO, utils.CHANNEL.MTN, accountholderid);
+            reservation.id, transactionid, utils.SOURCE.EIPO, utils.CHANNEL.MTN, accountholderid, module);
         if (!tx) {
             res.send(xmlBuilder.paymentResponse(errorId, "FAILED", "transaction error."));
             let resp = {

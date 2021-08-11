@@ -36,7 +36,8 @@ exports.transactionRequest = async (req, res, next) => {
     }
 }
 
-exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference, source, channel, momoAgentId= null, module = null) => {
+exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference,
+                                   source, channel, momoAgentId= null, module = null) => {
     try {
         let transactionReference = help.generateOTCode(20, true);
 
