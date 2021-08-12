@@ -7,7 +7,7 @@ const _ = require('underscore');
 const helper = require('../../config/helper');
 const Wallet = db.wallets;
 const Token = db.tokens;
-const sendEmail = require('../../config/email');
+const {sendEmail} = require('../../config/email');
 
 exports.create = async(req, res, next) => {
     try {

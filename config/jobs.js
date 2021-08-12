@@ -5,7 +5,7 @@ const Reservation = db.reservations;
 const Wallet = db.wallets;
 const Token = db.tokens;
 const cscs = require('./cscs');
-const sendEmail = require('./email');
+const {sendEmail} = require('./email');
 const { Op } = require('sequelize');
 const moment = require('moment');
 

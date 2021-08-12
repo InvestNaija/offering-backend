@@ -5,7 +5,7 @@ const Reservation = db.reservations;
 const Customer = db.customers;
 const cloudinary = require('../../config/cloudinary');
 const _ = require('underscore');
-const sendEmail = require('../../config/email');
+const {sendEmail} = require('../../config/email');
 
 
 exports.create = async(req, res, next) => {
