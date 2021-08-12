@@ -12,6 +12,7 @@ const sendEmail = require('../../config/email');
 const {Op} = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils')
+require('dotenv').config();
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -135,7 +136,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
             status: "success",
             message: 'Share callback endpoint hit',
         }
-        res.redirect('https://chapelhill.flexi.ng/user/dashboard/transactions/');
+        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
@@ -171,7 +172,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
                 </tr>
             </table>
             <p>Your allotment is being processed and would be completed shortly.</p>
-            <p>For further enquiries, please send an <a href = "mailto: investnaija@chapelhilldenham.com">email</a> to investnaija@chapelhilldenham.com or call <insert phone number>.</p>
+            <p>For further enquiries, please send an <a href = "mailto: dollarfund@chapelhilldenham.com">email</a> to dollarfund@chapelhilldenham.com or call <insert phone number>.</p>
             `
         }
         sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err))
@@ -422,7 +423,7 @@ exports.tokenizedPayment = async (user, cardDetail, billTo, amount, reservation,
                     </tr>
                 </table>
                 <p>Your allotment is being processed and would be completed shortly.</p>
-                <p>For further enquiries, please send an <a href = "mailto: investnaija@chapelhilldenham.com">email</a> to investnaija@chapelhilldenham.com or call <insert phone number>.</p>
+                <p>For further enquiries, please send an <a href = "mailto: dollarfund@chapelhilldenham.com">email</a> to dollarfund@chapelhilldenham.com.</p>
                 `
             }
             sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err))
@@ -501,7 +502,7 @@ exports.fundWalletFlutterwave = async(req, res, next) => {
         let {amount} = req.body;
         if(!amount) return next(new AppError('amount is required', 400));
         const user = await Customer.findByPk(id);
-        let callback_url = 'https://chapel-hill-be.herokuapp.com/api/v1/transactions/wallet/flutterwave/credit/success';
+        let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/wallet/flutterwave/credit/success`;
         let description = 'Wallet Deposit';
         const chargeResponse = await this.initiateChargeCard(user, amount, description, null, callback_url, null);
         if(chargeResponse.status !== 'success') return next(new AppError('Error initializing transaction', 500));
@@ -526,7 +527,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
             status: "success",
             message: 'Wallet funding callback endpoint hit',
         }
-        res.redirect('https://chapelhill.flexi.ng/user/dashboard/transactions/');
+        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
@@ -559,7 +560,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
                     <td>${transaction.description}</td>
                 </tr>
             </table>
-            <p>For further enquiries, please send an <a href = "mailto: investnaija@chapelhilldenham.com">email</a> to investnaija@chapelhilldenham.com or call <insert phone number>.</p>
+            <p>For further enquiries, please send an <a href = "mailto: dollarfund@chapelhilldenham.com">email</a> to dollarfund@chapelhilldenham.com or call <insert phone number>.</p>
             `
         }
         sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err));
