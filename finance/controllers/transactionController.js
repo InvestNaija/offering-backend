@@ -140,7 +140,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
             status: "success",
             message: 'Share callback endpoint hit',
         }
-        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
@@ -534,7 +534,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
             status: "success",
             message: 'Wallet funding callback endpoint hit',
         }
-        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
