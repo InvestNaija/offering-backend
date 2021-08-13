@@ -49,6 +49,10 @@ exports.createTransaction = async (description, amount, type, user, brokerId, re
             source,
             channel
         }
+
+        tx.module = "e-Offerings";
+        tx.productType = "dollarfund";
+
         if (reservationId) tx.reservation = reservationId;
         if (brokerId) tx.brokerId = brokerId;
         const trans = await Transaction.create(tx);

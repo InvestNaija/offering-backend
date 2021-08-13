@@ -44,8 +44,13 @@ module.exports = (sequelize, Sequelize) => {
         channel: {
             type: Sequelize.STRING,
             defaultValue: 'eipo'
-        }
+        },
 
+        module: Sequelize.STRING,
+
+        momoAgentId: Sequelize.STRING,
+
+        productType: Sequelize.STRING
     })
 
 
