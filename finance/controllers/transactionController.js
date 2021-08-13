@@ -212,7 +212,7 @@ exports.getMyTransactions = async (req, res, next) => {
 
         let customerId = req.user.id;
         let transactions = [];
-        let {channel, source, start, end, type} = req.query;
+        let {channel, source, module, productType, processed, start, end, type} = req.query;
 
         let query = {
             where: {
@@ -234,6 +234,9 @@ exports.getMyTransactions = async (req, res, next) => {
         if (source) query.where.source = source
         if (channel) query.where.channel = channel
         if (type) query.where.type = type
+        if (module) query.where.module = module
+        if (productType) query.where.productType = productType
+        if (processed) query.where.processedByAdmin = true;
 
         transactions = await Transaction.findAll(query);
         let resp = {
