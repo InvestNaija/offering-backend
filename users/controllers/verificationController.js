@@ -228,3 +228,50 @@ exports.getBVNDetails = async (req, res, next) => {
         return next(error);
     }
 }
+
+exports.updateCSCSNoVerification = async (req, res, next) => {
+    try {
+        let userId;
+        if (req.user.role === 'customer') userId = req.user.id;
+        if (req.user.role === 'broker') userId = req.body.customerId;
+        let {cscsNo, customerId} = req.body;
+        if (!userId) return next(new AppError('userId requierd.', 400));
+        if (!userId) return next(new AppError('userid is required', 400));
+        if (!cscsNo) return next(new AppError('CSCS is required', 400));
+        const cscsExists = await Customer.findOne({where: {cscs: cscsNo}});
+        if (cscsExists && cscsExists.id != userId) return next(new AppError('A user is already signed up with this cscs', 409));
+        const user = await Customer.findByPk(userId);
+        if (!user) return next(new AppError('user not found.', 404));
+        const response = await cscsAPI.verifyCSCS(cscsNo);
+
+        if(response.ResponseCode != 200) return next(new AppError('CSCS Number not valid', 404));
+        if(!response) return next(new AppError('Error verifying CSCS', 500));
+        // let fullName = `${user.firstName} ${user.lastName} ${user.middleName}`;
+        // fullName = fullName.toUpperCase();
+        // let compareResult = strSimilar.compareTwoStrings(fullName, response.AccountName);
+        // let percentageCorrect = compareResult * 100;
+        // console.log(percentageCorrect)
+        // if(percentageCorrect < 73) return next(new AppError('invalid cscs number.', 400));
+
+        await Customer.update({
+            cscsVerified: true,
+            //cscs: response.CscsNo
+            cscs: cscsNo
+        }, {
+            where: {id: userId}
+        });
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'CSCS number updated.',
+            data: response
+        }
+        res.status(resp.code).json(resp)
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error('Error from updateCSCSNoVerification: ', err);
+        return next(err);
+    }
+}
