@@ -50,7 +50,9 @@ module.exports = (sequelize, Sequelize) => {
 
         momoAgentId: Sequelize.STRING,
 
-        productType: Sequelize.STRING
+        productType: Sequelize.STRING,
+
+        processedByAdmin: Sequelize.BOOLEAN,
     })
 
 

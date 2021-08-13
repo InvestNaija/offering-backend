@@ -17,6 +17,9 @@ module.exports = {
             }),
             queryInterface.addColumn('transactions', 'productType', {
                 type: Sequelize.STRING,
+            }),
+            queryInterface.addColumn('transactions', 'processedByAdmin', {
+                type: Sequelize.BOOLEAN
             })
         ])
     },
@@ -32,6 +35,7 @@ module.exports = {
             queryInterface.removeColumn('transactions', 'module'),
             queryInterface.removeColumn('transactions', 'momoAgentId'),
             queryInterface.removeColumn('transactions', 'productType'),
+            queryInterface.removeColumn('transactions', 'processedByAdmin')
         ])
     }
 };
