@@ -156,3 +156,19 @@ exports.saveAndPlanAuth = (req, res, next) => {
         return next(error);
     }
 }
+
+exports.momoAndCustomerAuth = (req, res, next) => {
+    try {
+        let auth = req.headers['authorization'];
+        if(!auth) return next(new AppError('Unauthorised request.', 401));
+
+        const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
+
+        if(auth === process.env.MOMO_SECRET || authorized.role === "customer") {
+            next();
+        }
+        else return next(new AppError('You are unauthorized to access the resource', 401));
+    } catch (err) {
+        return next(err);
+    }
+}
