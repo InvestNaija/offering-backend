@@ -8,7 +8,7 @@ router.get('/wallet/flutterwave/credit/success', transaction.walletFundingFlutte
 
 router.get('/', auth.adminAuth, transaction.getAll)
 
-router.get('/my-transactions', auth.customerAuth, transaction.getMyTransactions)
+router.get('/my-transactions', auth.customerAndAdminAuth, transaction.getMyTransactions)
 
 router.get('/my-transactions/filtered', auth.customerAuth, transaction.getMyFilteredTransactions)
 
@@ -31,5 +31,7 @@ router.post('/fund-wallet/flutterwave', auth.customerAuth,auth.customerAuth, tra
 router.post('/wallet/credit/success', transaction.walletFundingVNubanWebhook)
 
 router.post('/log-transaction', auth.saveAndPlanAuth, transaction.transactionRequest)
+
+router.patch('/:id', auth.adminAuth, transaction.updateTransaction)
 
 module.exports = router;

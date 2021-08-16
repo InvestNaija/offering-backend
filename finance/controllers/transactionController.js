@@ -606,3 +606,27 @@ exports.walletFundingVNubanWebhook = async(req, res, next) => {
         return next(error);
     }
 }
+
+exports.updateTransaction = async (req, res, next) => {
+    try {
+        let id = req.params.id;
+        let status = req.body.status;
+
+        const transaction = await Transaction.findOne({where: {id}});
+
+        if (!transaction) {
+            return next(new AppError(`Transaction id: ${id} not found.`, 404));
+        }
+
+        await Transaction.update({status}, {where: {id}});
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Transaction updated successfully',
+        }
+    } catch (err) {
+        console.error("UpdateTransaction Error: ", err);
+        return next(err);
+    }
+}

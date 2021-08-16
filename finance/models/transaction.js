@@ -53,6 +53,12 @@ module.exports = (sequelize, Sequelize) => {
         productType: Sequelize.STRING,
 
         processedByAdmin: Sequelize.BOOLEAN,
+
+        updatedBy: {
+            type: Sequelize.UUID,
+            allowNull: true,
+            defaultValue: null,
+        }
     })
 
 
