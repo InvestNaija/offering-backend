@@ -7,7 +7,8 @@ const sendEmail = async options => {
     const transporter = nodemailer.createTransport({
         host: `${process.env.EMAIL_HOST}`,
         port: `${process.env.EMAIL_PORT}`,
-        secure: true,
+        secure: false,
+        requireTLS: true,
         auth: {
             user: process.env.EMAIL_USERNAME,
             pass: process.env.EMAIL_PASSWORD
@@ -16,7 +17,7 @@ const sendEmail = async options => {
 
     // 2) Define the email options
     const mailOptions = {
-        from: 'Chapel Hill Denham <hello@9id.com.ng>',
+        from: `Chapel Hill Denham <${process.env.EMAIL_USERNAME}>`,
         to: options.email,
         subject: options.subject,
         replyTo: options.replyTo,
@@ -48,7 +49,7 @@ const sendEmailWithTemplates = async (templateName, replacements, options) => {
     let template = handlebars.compile(html);
     let htmlToSend = template(replacements);
     let mailOptions = {
-        from: 'Chapel Hill Denham <hello@9id.com.ng>',
+        from: `Chapel Hill Denham <${process.env.EMAIL_USERNAME}>`,
         to: options.email,
         subject: options.subject,
         replyTo: options.replyTo,

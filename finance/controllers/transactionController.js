@@ -176,7 +176,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
                 </tr>
             </table>
             <p>Your allotment is being processed and would be completed shortly.</p>
-            <p>For further enquiries, please send an <a href = "mailto: dollarfund@chapelhilldenham.com">email</a> to dollarfund@chapelhilldenham.com or call <insert phone number>.</p>
+            <p>For further enquiries, please send an <a href = "mailto: ${process.env.MAILTO_ADDRESS}">email</a> to ${process.env.MAILTO_ADDRESS} or call ${process.env.PHONENUMBER}.</p>
             `
         }
         sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err))
@@ -567,7 +567,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
                     <td>${transaction.description}</td>
                 </tr>
             </table>
-            <p>For further enquiries, please send an <a href = "mailto: dollarfund@chapelhilldenham.com">email</a> to dollarfund@chapelhilldenham.com or call <insert phone number>.</p>
+            <p>For further enquiries, please send an <a href = "mailto: ${process.env.MAILTO_ADDRESS}">email</a> to ${process.env.MAILTO_ADDRESS} or call <insert phone number>.</p>
             `
         }
         sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err));
