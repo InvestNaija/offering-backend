@@ -209,7 +209,6 @@ exports.getAll = async (req, res, next) => {
 
 exports.getMyTransactions = async (req, res, next) => {
     try {
-
         let customerId = req.user.id;
         let transactions = [];
         let {channel, source, module, productType, processed, start, end, type} = req.query;
@@ -627,6 +626,52 @@ exports.updateTransaction = async (req, res, next) => {
         }
     } catch (err) {
         console.error("UpdateTransaction Error: ", err);
+        return next(err);
+    }
+}
+
+exports.getCustomerTransaction = async (req, res, next) => {
+    try {
+        let customerId = req.params.id;
+        let transactions = [];
+        let {channel, source, module, productType, processed, start, end, type} = req.query;
+
+        let query = {
+            where: {
+                customerId,
+            },
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        }
+        if (start && end) {
+            if (!moment(start).isValid() || !moment(end).isValid()) return next(new AppError('invalid date format', 400));
+            start = new Date(start);
+            end = new Date(end);
+            query.where.createdAt = {
+                [Op.between]: [start, end]
+            }
+        }
+
+        if (source) query.where.source = source
+        if (channel) query.where.channel = channel
+        if (type) query.where.type = type
+        if (module) query.where.module = module
+        if (productType) query.where.productType = productType
+        if (processed) query.where.processedByAdmin = true;
+
+        transactions = await Transaction.findAll(query);
+        let resp = {
+            code: 200,
+            status: "success",
+            message: 'Customers transactions fetched',
+            data: transactions
+        }
+        res.status(resp.code).json(resp)
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error("GetCustomerTransaction Error: ", err);
         return next(err);
     }
 }
