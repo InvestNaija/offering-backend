@@ -156,3 +156,18 @@ exports.saveAndPlanAuth = (req, res, next) => {
         return next(error);
     }
 }
+
+exports.customerAndAdminAuth = (req, res, next) => {
+    try {
+        let auth = req.headers['authorization'];
+        if(!auth) return next(new AppError('Please login to access the resource', 401));
+        const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
+        if(authorized.role === "admin" || authorized.role === "customer") {
+            req.user = authorized;
+            next();
+        }
+        else return next(new AppError('You are unauthorized to access the resource', 401));
+    } catch (err) {
+        return next(err);
+    }
+}
