@@ -164,3 +164,12 @@ exports.resetPassword = async (req, res, next) => {
         return next(err);
     }
 }
+
+exports.changePassword = async (req, res, next) => {
+    try {
+
+    } catch (err) {
+        console.error('ChangePassword Error: ', err);
+        return next(err);
+    }
+}
