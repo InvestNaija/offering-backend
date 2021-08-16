@@ -167,7 +167,22 @@ exports.resetPassword = async (req, res, next) => {
 
 exports.changePassword = async (req, res, next) => {
     try {
-
+        let id = req.user.id
+        let {oldPassword, newPassword} = req.body;
+        if (!oldPassword || !newPassword) return next(new AppError('New and old passwords required', 406));
+        const admin = await Admin.findByPk(id);
+        const confirmedPassword = bcrypt.compareSync(oldPassword, admin.password);
+        if (!confirmedPassword) return next(new AppError('Incorrect old password entered', 401));
+        let hash = bcrypt.hashSync(newPassword, 12);
+        await Admin.update({password: hash}, {where: {id}});
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'broker Password updated'
+        }
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
     } catch (err) {
         console.error('ChangePassword Error: ', err);
         return next(err);
