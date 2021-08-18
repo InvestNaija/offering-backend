@@ -13,7 +13,7 @@ const {sendEmail} = require('../../config/email');
 const {Op} = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils');
-const { getPagination, getPagingData } = require('/config/pagination');
+const { getPagination, getPagingData } = require('../../config/pagination');
 require('dotenv').config();
 
 exports.transactionRequest = async (req, res, next) => {
@@ -205,7 +205,7 @@ exports.getAll = async (req, res, next) => {
             limit,
             offset,
             distinct: true,
-            include: ['customer'], order: [
+            order: [
                 ['createdAt', 'DESC']
             ]
         });
@@ -213,13 +213,26 @@ exports.getAll = async (req, res, next) => {
         let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
 
         // get assets details
-        for (const transaction of transactions) {
-            const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
-            if (reservation) {
-                const asset = await Asset.findOne({where: {id: reservation.assetId}});
-                if (asset) {
-                    transaction.dataValues.asset = asset.dataValues;
+        for (const transaction of transactions.rows) {
+            let reservationId = '';
+            let assetId = '';
+            let assetsData = {};
+
+            // check if we have already retrieved reservation id
+            if (transaction.reservation !== reservationId) {
+                reservationId = transaction.reservation;
+                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+                // check if we have already retrieved asset id
+                if (reservation && (reservation.assetId !== assetId)) {
+                    assetId = reservation.assetId;
+                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                    if (asset) {
+                        assetsData = asset.dataValues;
+                        transaction.dataValues.asset = asset.dataValues;
+                    }
                 }
+            } else {
+                transaction.dataValues.asset = assetsData;
             }
         }
 

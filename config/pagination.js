@@ -7,7 +7,7 @@ exports.getPagination = (page, size) => {
 };
 
 exports.getPagingData = (allData, page, limit) => {
-    const { count: totalItems, rows: data } = data;
+    const { count: totalItems, rows: data } = allData;
 
     const currentPage = page ? ++page : 1;
     // const previousPage = currentPage ? -page : 1;
