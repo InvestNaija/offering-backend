@@ -39,10 +39,6 @@ module.exports = (sequelize, Sequelize) => {
             values: ['admin'],
             defaultValue: 'admin'
         },
-
-        createdBy: {
-            type: Sequelize.STRING,
-        }
     })
 
     Admin.prototype.toJSON =  function () {
