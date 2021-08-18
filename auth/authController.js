@@ -178,6 +178,10 @@ exports.superAdmin = (req, res, next) => {
         return next(new AppError('Please login to access the resource', 401));
     }
 
+    if(auth.startsWith("Bearer")) {
+        auth = auth.substring(7);
+    }
+
     const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
 
     if (authorized.role === "superAdmin") {
