@@ -529,7 +529,7 @@ exports.fetch = async (req, res, next) => {
         let resp = {
             code: 200,
             status: 'success',
-            message: 'customer fetched',
+            message: 'Retrieved customer successfully',
             data: customer
         }
         res.status(resp.code).json(resp)

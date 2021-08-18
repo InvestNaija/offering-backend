@@ -28,7 +28,7 @@ router.get('/profile/fetch', auth.customerAuth, customer.getProfile)
 
 router.patch('/update-bank-details', auth.customerAuth, customer.updateBankAccount)
 
-router.get('/:id', customer.fetch)
+router.get('/:id', auth.customerAndAdminAuth, customer.fetch)
 
 router.route('/upload-kyc-documents')
     .post(auth.customerAuth, customer.newUploadKycDocuments)
