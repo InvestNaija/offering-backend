@@ -34,6 +34,7 @@ router.post('/log-transaction', auth.saveAndPlanAuth, transaction.transactionReq
 
 router.route('/:id')
     .patch(auth.adminAuth, transaction.updateTransaction)
-    .get(auth.adminAuth, transaction.getCustomerTransaction)
+
+router.get('/customer/:id', auth.adminAuth, transaction.getCustomerTransaction)
 
 module.exports = router;

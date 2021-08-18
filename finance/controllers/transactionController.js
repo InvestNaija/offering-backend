@@ -682,9 +682,20 @@ exports.getCustomerTransaction = async (req, res, next) => {
     try {
         let customerId = req.params.id;
         let transactions = [];
-        let {channel, source, module, productType, processed, start, end, type} = req.query;
+        let {page, size, channel, source, module, productType, processed, start, end, type} = req.query;
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
 
         let query = {
+            limit,
+            offset,
+            distinct: true,
             where: {
                 customerId,
             },
@@ -692,6 +703,7 @@ exports.getCustomerTransaction = async (req, res, next) => {
                 ['createdAt', 'DESC']
             ]
         }
+
         if (start && end) {
             if (!moment(start).isValid() || !moment(end).isValid()) return next(new AppError('invalid date format', 400));
             start = new Date(start);
@@ -708,12 +720,18 @@ exports.getCustomerTransaction = async (req, res, next) => {
         if (productType) query.where.productType = productType
         if (processed) query.where.processedByAdmin = true;
 
-        transactions = await Transaction.findAll(query);
+        transactions = await Transaction.findAndCountAll(query);
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
+
         let resp = {
             code: 200,
             status: "success",
-            message: 'Customers transactions fetched',
-            data: transactions
+            message: `Customers transactions fetched`,
+            data,
+            totalItems,
+            totalPages,
+            currentPage
         }
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
