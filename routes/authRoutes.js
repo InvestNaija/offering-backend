@@ -13,7 +13,7 @@ router.post('/customers/forgot-password', customer.forgotPasswordCustomer)
 router.post('/customers/reset-password/:token', customer.resetPasswordCustomer)
 router.post('/customers/change-password', auth.customerAuth, customer.changePassword)
 
-router.post('/admins/signup', admin.signup)
+router.post('/admins/signup', auth.superAdmin, admin.signup)
 router.post('/admins/login', admin.login)
 router.post('/admins/update', auth.adminAuth, admin.update)
 router.get('/admins/fetch', auth.adminAuth, admin.fetch)

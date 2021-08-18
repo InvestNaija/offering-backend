@@ -10,17 +10,28 @@ const Token = db.tokens;
 
 exports.signup = async(req, res, next) => {
     try {
-        let {email, password} = req.body;
+        let createdBy = req.user.id;
+        let {email, password, firstname, lastname} = req.body;
+        if(!firstname) {
+            return next(new AppError('firstname is required', 400));
+        }
+
+        if (!lastname) {
+            return next(new AppError('lastname is required', 400));
+        }
+
         if(!email || !password) return next(new AppError('email and password required', 400));
+
         const emailExists = await Admin.findOne({where: {email}});
         if(emailExists) return next(new AppError('A user is already signed up with this email', 409));
         let hash = bcrypt.hashSync(password, 12);
-        const admin = await Admin.create({email, password: hash});
+        const admin = await Admin.create({firstName: firstname, lastName: lastname, email, password: hash, createdBy});
+
         let resp = {
             code: 201,
             status: 'success',
+            message: 'Created admin successfully',
             data: admin,
-            message: 'Signup success'
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
