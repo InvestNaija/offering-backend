@@ -192,6 +192,9 @@ exports.getAll = async (req, res, next) => {
     try {
         let {page, size} = req.query;
         let transactions = [];
+        let reservationId = '';
+        let assetId = '';
+        let assetsData = {};
 
         if (page && page >= 0) {
             page = page - 1;
@@ -214,10 +217,6 @@ exports.getAll = async (req, res, next) => {
 
         // get assets details
         for (const transaction of transactions.rows) {
-            let reservationId = '';
-            let assetId = '';
-            let assetsData = {};
-
             // check if we have already retrieved reservation id
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
@@ -230,6 +229,8 @@ exports.getAll = async (req, res, next) => {
                         assetsData = asset.dataValues;
                         transaction.dataValues.asset = asset.dataValues;
                     }
+                } else {
+                    transaction.dataValues.asset = assetsData;
                 }
             } else {
                 transaction.dataValues.asset = assetsData;
