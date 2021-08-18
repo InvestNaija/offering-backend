@@ -6,6 +6,7 @@ const Transaction = db.transactions;
 const Customer = db.customers;
 const Reservation = db.reservations;
 const Wallet = db.wallets;
+const Asset = db.assets;
 const asset = require('../../asset/controllers/assetController');
 const help = require('../../config/helper');
 const {sendEmail} = require('../../config/email');
@@ -193,6 +194,15 @@ exports.getAll = async (req, res, next) => {
                 ['createdAt', 'DESC']
             ]
         });
+
+        // get assets details
+        for (const transaction of transactions) {
+            const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+            const asset = await Asset.findOne({where: {id: reservation.assetId}});
+
+            transaction.asset = asset;
+        }
+
         let resp = {
             code: 200,
             status: "success",
@@ -610,6 +620,7 @@ exports.updateTransaction = async (req, res, next) => {
     try {
         let id = req.params.id;
         let status = req.body.status;
+        let updatedBy = req.user.id;
 
         const transaction = await Transaction.findOne({where: {id}});
 
@@ -617,7 +628,7 @@ exports.updateTransaction = async (req, res, next) => {
             return next(new AppError(`Transaction id: ${id} not found.`, 404));
         }
 
-        await Transaction.update({status}, {where: {id}});
+        await Transaction.update({status, updatedBy}, {where: {id}});
 
         let resp = {
             code: 200,

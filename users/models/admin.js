@@ -38,6 +38,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.ENUM,
             values: ['admin'],
             defaultValue: 'admin'
+        },
+
+        createdBy: {
+            type: Sequelize.STRING,
         }
     })
 
