@@ -171,3 +171,19 @@ exports.customerAndAdminAuth = (req, res, next) => {
         return next(err);
     }
 }
+
+exports.superAdmin = (req, res, next) => {
+    let auth = req.headers['authorization'];
+    if (!auth) {
+        return next(new AppError('Please login to access the resource', 401));
+    }
+
+    const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
+
+    if (authorized.role === "superAdmin") {
+        req.user = authorized;
+        next();
+    } else {
+        return next(new AppError('You are unauthorized to access the resource', 401));
+    }
+}
