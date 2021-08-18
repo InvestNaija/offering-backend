@@ -198,9 +198,12 @@ exports.getAll = async (req, res, next) => {
         // get assets details
         for (const transaction of transactions) {
             const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
-            const asset = await Asset.findOne({where: {id: reservation.assetId}});
-
-            transaction.asset = asset;
+            if (reservation) {
+                const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                if (asset) {
+                    transaction.asset = asset;
+                }
+            }
         }
 
         let resp = {
