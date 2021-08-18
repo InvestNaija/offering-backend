@@ -39,6 +39,16 @@ module.exports = (sequelize, Sequelize) => {
             values: ['admin'],
             defaultValue: 'admin'
         },
+
+        createdBy: {
+            type: Sequelize.UUID,
+            defaultValue: null,
+        },
+
+        updatedBy: {
+            type: Sequelize.UUID,
+            defaultValue: null,
+        }
     })
 
     Admin.prototype.toJSON =  function () {
