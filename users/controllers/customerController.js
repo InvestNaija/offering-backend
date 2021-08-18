@@ -1025,7 +1025,7 @@ exports.newUploadKycDocuments = async (req, res, next) => {
         const form = new formidable({multiples: true});
         let files = {};
         let fields = {};
-        const newDocuments = [];
+
         let document = {
             name: '',
             value: '',
@@ -1053,15 +1053,34 @@ exports.newUploadKycDocuments = async (req, res, next) => {
 
                 res.status(resp.code).json(resp);
 
-                for (const key in fields) {
-                    document.name = key;
-                    document.value = fields[key];
+                // check if customer already exists in the data
+                let customers = await KycDocuments.findAll({
+                    where: {customerId: userId}
+                });
 
-                    // add new documents to documents array
-                    newDocuments.push(document);
+                for (let field in fields) {
+                    document.name = field;
+                    document.value = fields[field];
+
+                    let documentType = document.name.split(';');
+                    // update value if data already exists for the customer
+                    let item = customers.filter(c => c.name.split(';')[0] === documentType[0]);
+
+                    if (item.length > 0) {
+                        for (let val of item) {
+                            await KycDocuments.update({name: document.name, value: document.value}, {
+                                where: {
+                                    [Op.and]: [{customerId: userId}, {name: val.name}]
+                                }
+                            });
+                        }
+                    } else {
+                        // add new documents to documents array
+                        await KycDocuments.create(document);
+                    }
                 }
 
-                for (const key in files) {
+                for (let key in files) {
                     let file = files[key].path;
                     let extName = path.extname(file);
                     let result = {};
@@ -1075,14 +1094,26 @@ exports.newUploadKycDocuments = async (req, res, next) => {
                         document.value = result.secure_url;
                         document.name = key;
 
-                        // add new documents to documents array
-                        newDocuments.push(document);
-                        // console.log(update);
+                        let documentType = key.split(';');
+
+                        // update value if data already exists for the customer
+                        let item = customers.filter(c => c.name.split(';')[0] === documentType[0]);
+
+                        if (item.length > 0) {
+                            for (let val of item) {
+                                await KycDocuments.update({name: document.name, value: document.value}, {
+                                    where: {
+                                        [Op.and]: [{customerId: userId}, {name: val.name}]
+                                    }
+                                });
+                            }
+                        } else {
+                            // add new documents to documents array
+                            await KycDocuments.create(document);
+                        }
                     }
                 }
 
-                // create documents in bulk on the database
-                await KycDocuments.bulkCreate(newDocuments);
                 res.locals.resp = resp;
                 return next();
             })
@@ -1176,7 +1207,8 @@ exports.getUploadedKycDocuments = async (req, res, next) => {
         const userId = req.user.id;
 
         let documents = await KycDocuments.findAll({
-            where: {customerId: userId}
+            where: {customerId: userId},
+            attributes: ['name', 'value']
         });
 
         let resp = {

@@ -26,17 +26,18 @@ router.get('/documents/fetch', auth.customerAuth, customer.fetchDocuments)
 
 router.get('/profile/fetch', auth.customerAuth, customer.getProfile)
 
-router.patch('/update-bank-details', auth.customerAuth, customer.updateBankAccount)
+router.patch('/update-bank-details', auth.customerAndAdminAuth, customer.updateBankAccount)
 
 router.get('/:id', auth.customerAndAdminAuth, customer.fetch)
 
 router.route('/upload-kyc-documents')
-    .post(auth.customerAuth, customer.newUploadKycDocuments)
-    .get(auth.customerAuth, customer.getUploadedKycDocuments)
+    .post(auth.customerAndAdminAuth, customer.newUploadKycDocuments)
+
+router.get('/documents/kyc', auth.customerAndAdminAuth, customer.getUploadedKycDocuments);
 
 router.route('/next-of-kin')
     .post(auth.customerAuth, customer.createNextOfKin)
-    .patch(auth.customerAuth, customer.editNextOfKin)
+    .patch(auth.customerAndAdminAuth, customer.editNextOfKin)
 
 router.post('/mini-signup', customer.miniSignup)
 
