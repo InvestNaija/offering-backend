@@ -31,9 +31,9 @@ router.patch('/update-bank-details', auth.customerAndAdminAuth, customer.updateB
 router.get('/:id', auth.customerAndAdminAuth, customer.fetch)
 
 router.route('/upload-kyc-documents')
-    .post(auth.customerAndAdminAuth, customer.newUploadKycDocuments)
+    .post(auth.customerAuth, customer.newUploadKycDocuments)
 
-router.get('/documents/kyc', auth.customerAndAdminAuth, customer.getUploadedKycDocuments);
+router.get('/documents/kyc', auth.customerAuth, customer.getUploadedKycDocuments);
 
 router.route('/next-of-kin')
     .post(auth.customerAuth, customer.createNextOfKin)

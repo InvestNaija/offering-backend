@@ -1021,7 +1021,13 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
 
 exports.newUploadKycDocuments = async (req, res, next) => {
     try {
-        let userId = req.user.id;
+        let userId = '';
+        if (req.user.role === "customer") {
+            userId = req.user.id;
+        } else {
+            userId = req.params.id;
+        }
+
         const form = new formidable({multiples: true});
         let files = {};
         let fields = {};
@@ -1162,7 +1168,13 @@ exports.createNextOfKin = async (req, res, next) => {
 
 exports.editNextOfKin = async (req, res, next) => {
     try {
-        const userId = req.user.id;
+        let userId = '';
+        if (req.user.role === "customer") {
+            userId = req.user.id;
+        } else {
+            userId = req.params.id;
+        }
+
         let {name, relationship, address, phoneNumber, email} = req.body;
 
         // check if user supplied the requested items
@@ -1204,7 +1216,13 @@ exports.editNextOfKin = async (req, res, next) => {
 
 exports.getUploadedKycDocuments = async (req, res, next) => {
     try {
-        const userId = req.user.id;
+        let userId = '';
+        if (req.user.role === "customer") {
+            userId = req.user.id;
+        } else {
+            userId = req.params.id;
+        }
+
 
         let documents = await KycDocuments.findAll({
             where: {customerId: userId},
