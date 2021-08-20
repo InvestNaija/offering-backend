@@ -5,9 +5,9 @@ const db = require('../models/index');
 const BvnData = db.bvnData;
 const Customer = db.customers;
 const Admin = db.admins;
-const { Op } = require('sequelize');
+const {Op} = require('sequelize');
 const moment = require("moment");
-const { empty } = require('uuidv4');
+const {empty} = require('uuidv4');
 
 const getHeaders = {
     'Authorization': `Bearer ${process.env.VERIFYME_KEY}`
@@ -19,7 +19,7 @@ const postHeaders = {
 };
 
 
-exports.verifyNIN = async(nin, firstname, lastname) => {
+exports.verifyNIN = async (nin, firstname, lastname) => {
     try {
         let body = {
             firstname,
@@ -45,32 +45,42 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
         let res = {};
 
         if (bvnExists) {
-           let bvndata = {
-               bvn,
-               firstname: bvnExists.firstName,
-               middlename: bvnExists.middleName,
-               lastname: bvnExists.lastName,
-               email: bvnExists.email,
-               phone: bvnExists.phoneNumber,
-               image: bvnExists.image,
-               birthdate: moment(bvnExists.dateOfBirth).format('DD-MM-YYYY')
-           };
+            let bvndata = {
+                bvn,
+                firstname: bvnExists.firstName,
+                middlename: bvnExists.middleName,
+                lastname: bvnExists.lastName,
+                email: bvnExists.email,
+                phone: bvnExists.phoneNumber,
+                image: bvnExists.image,
+                birthdate: moment(bvnExists.dateOfBirth).format('DD-MM-YYYY'),
+                maritalStatus: bvnExists.maritalStatus,
+                lgaOfResidence: bvnExists.lgaOfResidence,
+                lgaOfOrigin: bvnExists.lgaOfOrigin,
+                residentialAddress: bvnExists.residentialAddress,
+                stateOfOrigin: bvnExists.stateOfOrigin,
+                enrollmentBank: bvnExists.enrollmentBank,
+                enrollmentBranch: bvnExists.enrollmentBranch,
+                nameOnCard: bvnExists.nameOnCard,
+                title: bvnExists.title,
+                levelOfAccount: bvnExists.levelOfAccount
+            };
 
-           res.data = bvndata;
-           res.status = 'success';
+            res.data = bvndata;
+            res.status = 'success';
 
-           return res;
+            return res;
         }
-        
-        if(!firstname) {
+
+        if (!firstname) {
             firstname = 'firstname';
         }
 
-        if(!lastname) {
+        if (!lastname) {
             lastname = 'lastname';
         }
 
-        const url = `${process.env.VERIFYME_BVN_ENDPOINT}/${bvn}`
+        const url = `${process.env.VERIFYME_BVN_ENDPOINT}/${bvn}?type=premium`
 
         let body = {
             firstname,
@@ -125,8 +135,7 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
 
         res = response.data;
         return res;
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         return;
     }
