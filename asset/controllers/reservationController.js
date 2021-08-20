@@ -317,7 +317,7 @@ exports.payForReservation = async (req, res, next) => {
             };
             const response = await transaction.tokenizedPayment(reservation.customer.dataValues, cardDetail, billTo, amount, reservation.id, brokerId, description);
             if (response !== 'success') return next(new AppError('Error processing transaction', 500));
-            res.redirect('${process.env.FRONTEND_URL}/user/dashboard/transactions/');
+            res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
             let resp = {
                 code: 200,
                 status: "success",
