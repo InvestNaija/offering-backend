@@ -38,7 +38,27 @@ module.exports = (sequelize, Sequelize) => {
 
         image: {
             type: Sequelize.TEXT
-        }
+        },
+
+        maritalStatus: Sequelize.STRING,
+
+        lgaOfResidence: Sequelize.STRING,
+
+        lgaOfOrigin: Sequelize.STRING,
+
+        residentialAddress: Sequelize.STRING,
+
+        stateOfOrigin: Sequelize.STRING,
+
+        enrollmentBank: Sequelize.STRING,
+
+        enrollmentBranch: Sequelize.STRING,
+
+        nameOnCard: Sequelize.STRING,
+
+        title: Sequelize.STRING,
+
+        levelOfAccount: Sequelize.STRING
     }, {
         paranoid: true,
         timestamps: true
