@@ -80,7 +80,7 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
             lastname = 'lastname';
         }
 
-        const url = `${process.env.VERIFYME_BVN_ENDPOINT}/${bvn}`
+        const url = `${process.env.VERIFYME_BVN_ENDPOINT}/${bvn}?type=premium`
 
         let body = {
             firstname,
