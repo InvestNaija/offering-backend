@@ -53,7 +53,17 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
                email: bvnExists.email,
                phone: bvnExists.phoneNumber,
                image: bvnExists.image,
-               birthdate: moment(bvnExists.dateOfBirth).format('DD-MM-YYYY')
+               birthdate: moment(bvnExists.dateOfBirth).format('DD-MM-YYYY'),
+               maritalStatus: bvnExists.maritalStatus,
+               lgaOfResidence: bvnExists.lgaOfResidence,
+               lgaOfOrigin: bvnExists.lgaOfOrigin,
+               residentialAddress: bvnExists.residentialAddress,
+               stateOfOrigin: bvnExists.stateOfOrigin,
+               enrollmentBank: bvnExists.enrollmentBank,
+               enrollmentBranch: bvnExists.enrollmentBranch,
+               nameOnCard: bvnExists.nameOnCard,
+               title: bvnExists.title,
+               levelOfAccount: bvnExists.levelOfAccount
            };
 
            res.data = bvndata;
