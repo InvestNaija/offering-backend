@@ -34,7 +34,9 @@ exports.signup = async (req, res, next) => {
             brokerId = req.user.id;
             broker = await Broker.findByPk(brokerId)
         }
-        let request = ['firstName', 'lastName', 'email', 'password', 'nin', 'bvn', 'address', 'gender', 'dob', 'phone'];
+        let request = ['firstName', 'lastName', 'email', 'password', 'nin', 'bvn', 'address',
+            'gender', 'dob', 'phone', 'placeOfBirth'];
+
         request.map(item => {
             if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
         })
@@ -69,6 +71,13 @@ exports.signup = async (req, res, next) => {
         if (broker) {
             post.brokerId = broker.id;
             post.accountType = 'broker';
+        }
+
+        // set mother's maiden name
+        if (req.body.motherMaidenname) {
+            post.mothersMaidenName = req.body.motherMaidenname;
+        } else {
+            post.mothersMaidenName = null;
         }
         const customer = await Customer.create(post);
 
