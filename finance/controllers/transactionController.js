@@ -192,9 +192,6 @@ exports.getAll = async (req, res, next) => {
     try {
         let {page, size} = req.query;
         let transactions = [];
-        let reservationId = '';
-        let assetId = '';
-        let assetsData = {};
 
         if (page && page >= 0) {
             page = page - 1;
@@ -213,29 +210,10 @@ exports.getAll = async (req, res, next) => {
             ]
         });
 
-        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
-
         // get assets details
-        for (const transaction of transactions.rows) {
-            // check if we have already retrieved reservation id
-            if (transaction.reservation !== reservationId) {
-                reservationId = transaction.reservation;
-                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
-                // check if we have already retrieved asset id
-                if (reservation && (reservation.assetId !== assetId)) {
-                    assetId = reservation.assetId;
-                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
-                    if (asset) {
-                        assetsData = asset.dataValues;
-                        transaction.dataValues.asset = asset.dataValues;
-                    }
-                } else {
-                    transaction.dataValues.asset = assetsData;
-                }
-            } else {
-                transaction.dataValues.asset = assetsData;
-            }
-        }
+        transactions = getAssetsForTransactions(transactions);
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
 
         let resp = {
             code: 200,
@@ -722,6 +700,8 @@ exports.getCustomerTransaction = async (req, res, next) => {
 
         transactions = await Transaction.findAndCountAll(query);
 
+        transactions = getAssetsForTransactions(transactions);
+
         let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
 
         let resp = {
@@ -740,4 +720,33 @@ exports.getCustomerTransaction = async (req, res, next) => {
         console.error("GetCustomerTransaction Error: ", err);
         return next(err);
     }
+}
+
+getAssetsForTransactions = async (transactions) => {
+    let reservationId = '';
+    let assetId = '';
+    let assetsData = {};
+
+    for (const transaction of transactions.rows) {
+        // check if we have already retrieved reservation id
+        if (transaction.reservation !== reservationId) {
+            reservationId = transaction.reservation;
+            const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+            // check if we have already retrieved asset id
+            if (reservation && (reservation.assetId !== assetId)) {
+                assetId = reservation.assetId;
+                const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                if (asset) {
+                    assetsData = asset.dataValues;
+                    transaction.dataValues.asset = asset.dataValues;
+                }
+            } else {
+                transaction.dataValues.asset = assetsData;
+            }
+        } else {
+            transaction.dataValues.asset = assetsData;
+        }
+    }
+
+    return transactions;
 }
