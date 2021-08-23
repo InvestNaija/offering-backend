@@ -58,7 +58,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.UUID,
             allowNull: true,
             defaultValue: null,
-        }
+        },
+    }, {
+        paranoid: true,
+        timestamps: true
     })
 
 
