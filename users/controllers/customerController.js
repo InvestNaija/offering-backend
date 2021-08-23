@@ -74,8 +74,8 @@ exports.signup = async (req, res, next) => {
         }
 
         // set mother's maiden name
-        if (req.body.motherMaidenname) {
-            post.mothersMaidenName = req.body.motherMaidenname;
+        if (req.body.mothersMaidenName) {
+            post.mothersMaidenName = req.body.mothersMaidenName;
         } else {
             post.mothersMaidenName = null;
         }
