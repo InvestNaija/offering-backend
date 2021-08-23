@@ -98,15 +98,13 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
         if (response.status == 201) {
             const customer = await Customer.findOne({
                 where: {
-                    [Op.or]: [{phone: response.data.data.phone}, {firstName: response.data.data.firstname},
-                        {lastName: response.data.data.lastname}]
+                    email: response.data.data.email
                 }
             });
 
             const admin = await Admin.findOne({
                 where: {
-                    [Op.or]: [{phone: response.data.data.phone}, {firstName: response.data.data.firstname},
-                        {lastName: response.data.data.lastname}]
+                    email: response.data.data.email
                 }
             });
 
@@ -120,6 +118,16 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
                 phoneNumber: response.data.data.phone,
                 dateOfBirth: moment(response.data.data.birthdate, 'DD-MM-YYYY').format('YYYY-MM-DD hh:mm:ss'),
                 image: response.data.data.photo,
+                maritalStatus: response.data.data.maritalStatus,
+                lgaOfResidence: response.data.data.lgaOfResidence,
+                lgaOfOrigin: response.data.data.lgaOfOrigin,
+                residentialAddress: response.data.data.residentialAddress,
+                stateOfOrigin: response.data.data.stateOfOrigin,
+                enrollmentBank: response.data.data.enrollmentBank,
+                enrollmentBranch: response.data.data.enrollmentBranch,
+                nameOnCard: response.data.data.nameOnCard,
+                title: response.data.data.title,
+                levelOfAccount: response.data.data.levelOfAccount,
                 customerId: customer ? customer.id : empty(),
                 adminId: admin ? admin.id : empty()
             };
