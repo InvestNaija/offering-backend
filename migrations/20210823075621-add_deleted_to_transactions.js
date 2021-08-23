@@ -10,11 +10,10 @@ module.exports = {
          */
         await Promise.all([
             queryInterface.addColumn('transactions', 'deletedAt', {
-                type: Sequelize.DATE
+                type: Sequelize.DATE,
+                allowNull: true,
+                defaultValue: null,
             }),
-            queryInterface.addColumn('transactions', 'deleted', {
-                type: Sequelize.BOOLEAN
-            })
         ]);
     },
 
@@ -27,7 +26,6 @@ module.exports = {
          */
         await Promise.all([
             queryInterface.removeColumn('transactions', 'deletedAt'),
-            queryInterface.removeColumn('transactions', 'deleted')
         ]);
     }
 };

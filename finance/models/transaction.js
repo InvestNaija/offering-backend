@@ -52,8 +52,6 @@ module.exports = (sequelize, Sequelize) => {
         },
 
         momoAgentId: Sequelize.STRING,
-
-        deleted: Sequelize.BOOLEAN
     }, {
         timestamps: true,
         paranoid: true
