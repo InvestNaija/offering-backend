@@ -171,7 +171,7 @@ exports.expressInterest = async (req, res, next) => {
             brokerId = req.user.id;
         }
 
-        let {assetId, units, customerId} = req.body;
+        let {assetId, amount, units, customerId} = req.body;
 
         if(!units) {
             units = 0;
@@ -187,7 +187,11 @@ exports.expressInterest = async (req, res, next) => {
         // if(!user.cscsVerified) return next(new AppError('CSCS number unverified.', 406));
         if (!asset) return next(new AppError('Asset not found.', 404));
         // if(units > asset.availableShares) return next(new AppError('Units requested surpasses available shares', 406));
-        let amount = units * asset.sharePrice;
+
+        if (!amount) {
+            amount = units * asset.sharePrice;
+        }
+
         let resp = {
             code: 200,
             status: 'success',
