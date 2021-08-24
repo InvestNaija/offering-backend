@@ -38,9 +38,12 @@ exports.signup = async (req, res, next) => {
         let request = ['firstName', 'lastName', 'email', 'password', 'nin', 'bvn', 'address',
             'gender', 'dob', 'phone', 'placeOfBirth'];
 
-        request.map(item => {
-            if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
-        })
+        for (let i = 0; i < request.length; i++) {
+            if (!req.body[request[i]] || req.body[request[i]] === "") {
+                return next(new AppError(`${request[i]} is required`, 400));
+            }
+        }
+
         request.push('middleName', 'bvn');
         let post = _.pick(req.body, request);
         let dob = moment(post.dob)
