@@ -89,7 +89,7 @@ exports.signup = async (req, res, next) => {
         let resp = {
             code: 201,
             status: 'success',
-            data: post,
+            data: customer,
             message: 'customer signup success. check your email for otp.'
         }
         res.status(resp.code).json(resp);
