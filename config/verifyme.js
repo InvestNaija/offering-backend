@@ -29,6 +29,7 @@ exports.verifyNIN = async (nin, firstname, lastname) => {
             url: `https://vapi.verifyme.ng/v1/verifications/identities/nin/${nin}`,
             method: 'POST',
             headers: postHeaders,
+            timeout: 60000,
             data: JSON.stringify(body)
         })
         return response.data;
@@ -147,6 +148,24 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
         return res;
     } catch (error) {
         console.error(error);
+        return;
+    }
+}
+
+exports.verifyNUBAN = async (bankCode, accountNumber) => {
+    try {
+        const response = await axios.request({
+            url: `https://vapi.verifyme.ng/v1/banks/${bankCode}/accounts/${accountNumber}`,
+            headers: getHeaders,
+            timeout: 60000,
+            method: 'GET'
+        });
+
+        response.data.data.account_name = response.data.data.accountName;
+
+        return response.data;
+    } catch (err) {
+        console.error('VerfiyMe NUBAN Verification Error: ', err);
         return;
     }
 }
