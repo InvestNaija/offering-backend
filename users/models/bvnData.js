@@ -58,7 +58,9 @@ module.exports = (sequelize, Sequelize) => {
 
         title: Sequelize.STRING,
 
-        levelOfAccount: Sequelize.STRING
+        levelOfAccount: Sequelize.STRING,
+
+        gender: Sequelize.STRING,
     }, {
         paranoid: true,
         timestamps: true
