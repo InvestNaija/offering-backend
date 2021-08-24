@@ -156,9 +156,14 @@ exports.expressInterest = async (req, res, next) => {
         }
 
         let {assetId, units, customerId} = req.body;
+
+        if (!units) {
+            units = 0;
+        }
+
         if (brokerId && !customerId) return next(new AppError('customerId is required', 400));
         if (customerId) userId = customerId
-        if (!assetId || !units) return next(new AppError('All parameters required.', 400));
+        if (!assetId || (units < 0)) return next(new AppError('All parameters required.', 400));
         // const assetReserved = await Reservation.findOne({where: {customerId: userId, assetId, status: 'pending'}});
         // if(assetReserved) return next(new AppError('You have already reserved this asset', 409));
         const asset = await Asset.findByPk(assetId);
