@@ -149,3 +149,21 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
         return;
     }
 }
+
+exports.verifyNUBAN = async (bankCode, accountNumber) => {
+    try {
+        const response = await axios.request({
+            url: `https://vapi.verifyme.ng/v1/banks/${bankCode}/accounts/${accountNumber}`,
+            headers: getHeaders,
+            timeout: 60000,
+            method: 'GET'
+        });
+
+        response.data.data.account_name = response.data.data.accountName;
+
+        return response.data;
+    } catch (err) {
+        console.error('VerfiyMe NUBAN Verification Error: ', err);
+        return;
+    }
+}

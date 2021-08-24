@@ -182,10 +182,26 @@ exports.verifyCustomerMTN = async (req, res, next) => {
 
 exports.verifyNUBAN = async (req, res, next) => {
     try {
+        let verifyMeResponse = {};
+        let flutterWaveResponse = {};
+        let response = {};
         let {nuban, bank_code} = req.body;
+
         if (!nuban || !bank_code) return next(new AppError('Bank code and nuban required', 400));
-        const response = await flutterwave.verifyAccount(nuban, bank_code);
-        if (response.status !== 'success') return next(new AppError(response.message, response.statusCode));
+
+        verifyMeResponse = await verifyme.verifyNUBAN(bank_code, nuban);
+
+        if (verifyMeResponse.status !== 'success') {
+            flutterWaveResponse = await flutterwave.verifyAccount(nuban, bank_code);
+            if (flutterWaveResponse.status !== 'success') {
+                return next(new AppError(flutterWaveResponse.message, flutterWaveResponse.statusCode));
+            } else {
+                response = flutterWaveResponse;
+            }
+        } else {
+            response = verifyMeResponse;
+        }
+
         let resp = {
             code: 200,
             status: 'success',
