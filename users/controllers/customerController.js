@@ -37,9 +37,12 @@ exports.signup = async (req, res, next) => {
         let request = ['firstName', 'lastName', 'email', 'password', 'nin', 'bvn', 'address',
             'gender', 'dob', 'phone', 'placeOfBirth'];
 
-        request.map(item => {
-            if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
-        })
+        for (let i = 0; i < request.length; i++) {
+            if (!req.body[request[i]] || req.body[request[i]] === "") {
+                return next(new AppError(`${request[i]} is required`, 400));
+            }
+        }
+
         request.push('middleName', 'bvn');
         let post = _.pick(req.body, request);
         let dob = moment(post.dob)
@@ -79,16 +82,19 @@ exports.signup = async (req, res, next) => {
         } else {
             post.mothersMaidenName = null;
         }
+
+        // save customer to database
         const customer = await Customer.create(post);
 
         let resp = {
             code: 201,
             status: 'success',
-            data: customer,
+            data: post,
             message: 'customer signup success. check your email for otp.'
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
+
         let otp = helper.generateOTCode(6, false);
         const token = await Token.create({token: otp, customerId: customer.id});
         let url = `${process.env.FRONTEND_URL}/auth/verify-otp`
@@ -103,7 +109,8 @@ exports.signup = async (req, res, next) => {
             <p>Chapel Hill Denham</p>
             `
         }
-        sendEmail(opts).then(r => console.log('OTP email sent to customer: ' + customer.email)).catch(err => console.log('error sending otp email', err))
+        sendEmail(opts).then(r => console.log('OTP email sent to customer: ' + customer.email)).catch(err => console.log('error sending otp email', err));
+
         return next();
     } catch (error) {
         return next(error);
