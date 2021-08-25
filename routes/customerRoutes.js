@@ -33,7 +33,7 @@ router.get('/:id', customer.fetch)
 router.route('/upload-kyc-documents')
     .post(auth.customerAuth, customer.newUploadKycDocuments)
 
-router.get('documents/kyc', auth.customerAuth, customer.getUploadedKycDocuments)
+router.get('/documents/kyc', auth.customerAuth, customer.getUploadedKycDocuments)
 
 router.route('/next-of-kin')
     .post(auth.customerAuth, customer.createNextOfKin)
