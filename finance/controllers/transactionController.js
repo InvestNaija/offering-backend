@@ -210,7 +210,9 @@ exports.getAll = async (req, res, next) => {
             limit,
             offset,
             distinct: true,
-            include: ['customer'], order: [
+            include: ['customer'],
+            order: [
+                ['status', 'DESC'],
                 ['createdAt', 'DESC']
             ]
         });
@@ -246,6 +248,7 @@ exports.getMyTransactions = async (req, res, next) => {
                 customerId,
             },
             order: [
+                ['status', 'DESC'],
                 ['createdAt', 'DESC']
             ]
         }
