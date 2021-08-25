@@ -250,9 +250,9 @@ exports.verifyCustomer = async (req, res, next) => {
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
         // **** Register user on zannibal and update id on profile
-        const response = await zanibal.registerCustomer(token.customer.firstName, token.customer.lastName, token.customer.email, token.customer.phone, token.customer.bvn);
-        if (response.success) await Customer.update({zanibalId: response.msgCode}, {where: {id: token.customer.id}});
-        else console.log('Error registering customer on zanibal;', response);
+        // const response = await zanibal.registerCustomer(token.customer.firstName, token.customer.lastName, token.customer.email, token.customer.phone, token.customer.bvn);
+        // if (response.success) await Customer.update({zanibalId: response.msgCode}, {where: {id: token.customer.id}});
+        // else console.log('Error registering customer on zanibal;', response);
         return next();
     } catch (error) {
         return next(error);
