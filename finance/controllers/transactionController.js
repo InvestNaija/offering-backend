@@ -266,6 +266,7 @@ exports.getMyTransactions = async (req, res, next) => {
                 customerId,
             },
             order: [
+                ['status', 'DESC'],
                 ['createdAt', 'DESC']
             ]
         }
