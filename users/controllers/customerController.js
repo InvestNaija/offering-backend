@@ -36,7 +36,7 @@ exports.signup = async (req, res, next) => {
             broker = await Broker.findByPk(brokerId)
         }
         let request = ['firstName', 'lastName', 'email', 'password', 'nin', 'bvn', 'address',
-            'gender', 'dob', 'phone', 'placeOfBirth'];
+            'gender', 'dob', 'phone', 'placeOfBirth', 'mothersMaidenName'];
 
         for (let i = 0; i < request.length; i++) {
             if (!req.body[request[i]] || req.body[request[i]] === "") {
