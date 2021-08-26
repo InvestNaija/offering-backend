@@ -633,3 +633,117 @@ exports.walletFundingVNubanWebhook = async(req, res, next) => {
         return next(error);
     }
 }
+
+exports.updateTransaction = async (req, res, next) => {
+    try {
+        let id = req.params.id;
+        let status = req.body.status;
+        let updatedBy = req.user.id;
+
+        const transaction = await Transaction.findOne({where: {id}});
+
+        if (!transaction) {
+            return next(new AppError(`Transaction id: ${id} not found.`, 404));
+        }
+
+        await Transaction.update({status, updatedBy}, {where: {id}});
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Transaction updated successfully',
+        }
+    } catch (err) {
+        console.error("UpdateTransaction Error: ", err);
+        return next(err);
+    }
+}
+
+exports.getCustomerTransaction = async (req, res, next) => {
+    try {
+        let customerId = req.params.id;
+        let transactions = [];
+        let reservationId = '';
+        let assetId = '';
+        let assetsData = {};
+        let {page, size, channel, source, module, productType, processed, start, end, type} = req.query;
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
+
+        let query = {
+            limit,
+            offset,
+            distinct: true,
+            where: {
+                customerId,
+            },
+            order: [
+                ['status', 'DESC'],
+                ['createdAt', 'DESC']
+            ]
+        }
+
+        if (start && end) {
+            if (!moment(start).isValid() || !moment(end).isValid()) return next(new AppError('invalid date format', 400));
+            start = new Date(start);
+            end = new Date(end);
+            query.where.createdAt = {
+                [Op.between]: [start, end]
+            }
+        }
+
+        if (source) query.where.source = source
+        if (channel) query.where.channel = channel
+        if (type) query.where.type = type
+        if (module) query.where.module = module
+        if (productType) query.where.productType = productType
+        if (processed) query.where.processedByAdmin = true;
+
+        transactions = await Transaction.findAndCountAll(query);
+
+        for (const transaction of transactions.rows) {
+            // check if we have already retrieved reservation id
+            if (transaction.reservation !== reservationId) {
+                reservationId = transaction.reservation;
+                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+                // check if we have already retrieved asset id
+                if (reservation && (reservation.assetId !== assetId)) {
+                    assetId = reservation.assetId;
+                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                    if (asset) {
+                        assetsData = asset.dataValues;
+                        transaction.dataValues.asset = asset.dataValues;
+                    }
+                } else {
+                    transaction.dataValues.asset = assetsData;
+                }
+            } else {
+                transaction.dataValues.asset = assetsData;
+            }
+        }
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
+
+        let resp = {
+            code: 200,
+            status: "success",
+            message: `Customers transactions fetched`,
+            data,
+            totalItems,
+            totalPages,
+            currentPage
+        }
+        res.status(resp.code).json(resp)
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error("GetCustomerTransaction Error: ", err);
+        return next(err);
+    }
+}
