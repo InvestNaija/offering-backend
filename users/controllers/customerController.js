@@ -23,6 +23,7 @@ const accessgateway = require('../../config/accessgateway');
 const KycDocuments = db.kycDocuments;
 const path = require('path');
 const {Op} = require('sequelize');
+const {getPagination, getPagingData} = require("../../config/pagination");
 require('dotenv').config();
 
 
@@ -491,13 +492,52 @@ exports.fetchDocuments = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
     try {
-        const customers = await Customer.findAll();
+        let {page, size, search} = req.query;
+        let customers = [];
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
+
+        let query = {
+            limit,
+            offset,
+            distinct: true,
+            order: [
+                ['createdAt', 'DESC']
+            ],
+        };
+
+        if (search) {
+            let item = {
+                [Op.or]: [
+                    {firstName: {[Op.iLike]: `%${search}%`}},
+                    {lastName: {[Op.iLike]: `%${search}%`}},
+                    {middleName: {[Op.iLike]: `%${search}%`}}
+                ]
+            };
+
+            query.where = item;
+        }
+
+        customers = await Customer.findAndCountAll(query);
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(customers, page, limit);
+
         let resp = {
             code: 200,
             status: 'success',
-            message: 'all customers fetched',
-            data: customers
+            message: 'All customers retrieved successfully',
+            data,
+            totalItems,
+            totalPages,
+            currentPage
         }
+
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
         return next();
