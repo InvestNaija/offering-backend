@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const auth = require('../../auth/authController');
 const Admin = db.admins;
 const cloudinary = require('../../config/cloudinary');
+const sendEmail = require("../../config/email");
 
 exports.signup = async(req, res, next) => {
     try {
@@ -89,5 +90,99 @@ exports.fetch = async(req, res, next) => {
         })
     } catch (error) {
         return next(error);
+    }
+}
+
+exports.forgotPassword = async (req, res, next) => {
+    try {
+        let {email, baseUrl} = req.body;
+        let url = "";
+        const admin = await Admin.findOne({where: {email}});
+        if (!admin) return next(new AppError('Admin not found.', 404));
+        let tokenStr = crypto.randomBytes(16).toString("hex");
+        const token = await Token.create({token: tokenStr, adminId: admin.id});
+        if (!token) return next(new AppError('error creating password reset', 500));
+
+        if (baseUrl) {
+            url = `${baseUrl}/auth/reset-password?token-details=${token.token}`;
+        } else {
+            url = `${process.env.FRONTEND_URL}/auth/reset-password?token-details=${token.token}`;
+        }
+
+        let opts = {
+            email: admin.email,
+            subject: 'Password Reset',
+            message: `<p>Hello ${admin.firstName} ${admin.lastName ? admin.lastName : ""},</p>
+            <p>Follow this link to reset your account's password:</p>
+            <p><a href="${url}">Reset</a></p>
+            `
+        }
+
+        sendEmail(opts).then(r => {
+            console.log('password reset email sent');
+            let resp = {
+                code: 200,
+                status: 'success',
+                message: 'Password reset email sent. Please check your mail.'
+            }
+            res.status(resp.code).json(resp);
+            res.locals.resp = resp;
+            return next();
+        }).catch(err => {
+            console.log('error sending password reset', err);
+            return next(new AppError('Error sending password reset email. Please try again.', 500));
+        })
+    } catch (err) {
+        return next(err);
+    }
+}
+
+exports.resetPassword = async (req, res, next) => {
+    try {
+        let token = req.params.token;
+        if (!token) return next(new AppError('token is required', 400));
+        let {password, confirmPassword} = req.body;
+        if (!password || !confirmPassword) return next(new AppError('password and confirmPassword is required', 400));
+        if (password !== confirmPassword) return next(new AppError('password and confirmPassword do not match', 400));
+        const tokenExists = await Token.findOne({where: {token}});
+        if (!tokenExists || tokenExists.used) return next(new AppError('invalid or expired token', 401));
+        let adminId = tokenExists.adminId;
+        if (!adminId) return next(new AppError('invalid customer', 401));
+        let hash = bcrypt.hashSync(password, 12);
+        await Admin.update({password: hash}, {where: {id: adminId}});
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Password reset successful.'
+        }
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        return next(err);
+    }
+}
+
+exports.changePassword = async (req, res, next) => {
+    try {
+        let id = req.user.id
+        let {oldPassword, newPassword} = req.body;
+        if (!oldPassword || !newPassword) return next(new AppError('New and old passwords required', 406));
+        const admin = await Admin.findByPk(id);
+        const confirmedPassword = bcrypt.compareSync(oldPassword, admin.password);
+        if (!confirmedPassword) return next(new AppError('Incorrect old password entered', 401));
+        let hash = bcrypt.hashSync(newPassword, 12);
+        await Admin.update({password: hash}, {where: {id}});
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'broker Password updated'
+        }
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error('ChangePassword Error: ', err);
+        return next(err);
     }
 }
