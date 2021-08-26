@@ -32,4 +32,9 @@ router.post('/wallet/credit/success', transaction.walletFundingVNubanWebhook)
 
 router.post('/log-transaction', auth.saveAndPlanAuth, transaction.transactionRequest)
 
+router.route('/:id')
+    .patch(auth.adminAuth, transaction.updateTransaction)
+
+router.get('/customer/:id', auth.adminAuth, transaction.getCustomerTransaction)
+
 module.exports = router;

@@ -147,7 +147,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
             status: "success",
             message: 'Share callback endpoint hit',
         }
-        res.redirect('https://chapelhill.flexi.ng/user/dashboard/transactions/');
+        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
@@ -183,7 +183,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
                 </tr>
             </table>
             <p>Your allotment is being processed and would be completed shortly.</p>
-            <p>For further enquiries, please send an <a href = "mailto: investnaija@chapelhilldenham.com">email</a> to investnaija@chapelhilldenham.com or call <insert phone number>.</p>
+            <p>For further enquiries, please send an <a href = "mailto: ${process.env.MAILTO_ADDRESS}">email</a> to ${process.env.MAILTO_ADDRESS} or call ${process.env.PHONENUMBER}.</p>
             `
         }
         sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err))
@@ -418,12 +418,12 @@ exports.tokenizedPayment = async (user, cardDetail, billTo, amount, reservation,
         }
         let descriptor = {
             companyName: "Chapel Hill Denham",
-            websiteLink: "chapel-hill.com.ng",
-            phoneNumber: "+2348145467267",
-            email: "cloud@chd.com.ng",
+            websiteLink: `${process.env.FRONTEND_URL}`,
+            phoneNumber: `${process.env.PHONENUMBER}`,
+            email: `${process.env.EMAIL_ADDRESS}`,
             country: "NG",
             city: "lagos",
-            address: "lekki"
+            address: "10 Bankole Oki, Ikoyi"
         }
         const captureResponse = await accesspayment.CapturePayment(amount, paymentResponse.data.id, paymentResponse.data.merchantRef, descriptor, billTo, cardDetail);
         if (!captureResponse) return;
@@ -457,7 +457,7 @@ exports.tokenizedPayment = async (user, cardDetail, billTo, amount, reservation,
                     </tr>
                 </table>
                 <p>Your allotment is being processed and would be completed shortly.</p>
-                <p>For further enquiries, please send an <a href = "mailto: investnaija@chapelhilldenham.com">email</a> to investnaija@chapelhilldenham.com or call <insert phone number>.</p>
+                <p>For further enquiries, please send an <a href = "mailto: ${process.env.MAILTO_ADDRESS}">email</a> to ${process.env.MAILTO_ADDRESS} or call ${process.env.PHONENUMBER}.</p>
                 `
             }
             sendEmail(opts).then(r => console.log('payment success email sent')).catch(err => console.log('error sending payment confirmation email', err))
@@ -536,7 +536,7 @@ exports.fundWalletFlutterwave = async(req, res, next) => {
         let {amount} = req.body;
         if(!amount) return next(new AppError('amount is required', 400));
         const user = await Customer.findByPk(id);
-        let callback_url = 'https://chapel-hill-be.herokuapp.com/api/v1/transactions/wallet/flutterwave/credit/success';
+        let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/wallet/flutterwave/credit/success`;
         let description = 'Wallet Deposit';
         const chargeResponse = await this.initiateChargeCard(user, amount, description, null, callback_url, null);
         if(chargeResponse.status !== 'success') return next(new AppError('Error initializing transaction', 500));
@@ -561,7 +561,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
             status: "success",
             message: 'Wallet funding callback endpoint hit',
         }
-        res.redirect('https://chapelhill.flexi.ng/user/dashboard/transactions/');
+        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;
