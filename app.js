@@ -18,6 +18,7 @@ const reservationRouter = require('./routes/reservationRoutes');
 const brokerRouter = require('./routes/brokerRoutes');
 const investmentRouter = require('./routes/investmentRoutes');
 const mtnRouter = require('./routes/mtnRoutes');
+const adminRouter = require('./routes/adminRoutes');
 const log = require('./log/logController');
 
 
@@ -42,6 +43,7 @@ app.use('/api/v1/reservations', reservationRouter);
 app.use('/api/v1/brokers', brokerRouter);
 app.use('/api/v1/mtn', mtnRouter);
 app.use('/api/v1/investments', investmentRouter);
+app.use('/api/v1/admin', adminRouter);
 
 app.get('/', (req, res, next) => {
     res.send('Hello CHD');

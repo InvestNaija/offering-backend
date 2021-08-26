@@ -69,6 +69,9 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.BOOLEAN,
             defaultValue: false
         }
+    }, {
+        paranoid: true,
+        timestamps: true
     })
 
     Asset.prototype.toJSON =  function () {
