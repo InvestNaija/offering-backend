@@ -6,6 +6,7 @@ const Transaction = db.transactions;
 const Customer = db.customers;
 const Reservation = db.reservations;
 const Wallet = db.wallets;
+const Asset = db.assets;
 const asset = require('../../asset/controllers/assetController');
 const help = require('../../config/helper');
 const sendEmail = require('../../config/email');
