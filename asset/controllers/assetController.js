@@ -7,6 +7,7 @@ const cloudinary = require('../../config/cloudinary');
 const _ = require('underscore');
 const sendEmail = require('../../config/email');
 const {getPagination, getPagingData} = require("../../config/pagination");
+const {Op} = require('sequelize');
 
 
 exports.create = async (req, res, next) => {
@@ -277,7 +278,15 @@ exports.get = async (req, res, next) => {
         // get non-deleted items
         query.where.deletedAt = null;
 
-        if (name) query.where.name = name
+        if (name) {
+            let item = {
+                [Op.or]: [
+                    {name: {[Op.like]: `%${name}%`}}
+                ]
+            }
+
+            query.where = item;
+        }
         if (open) query.where.openForPurchase = true
         if (popular) {
             query.order = [
