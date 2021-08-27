@@ -7,8 +7,8 @@ const asset = require("../asset/controllers/assetController");
 router.route('/assets')
     .post(auth.adminAuth, asset.create);
 
-router.get('/assets/:id', auth.adminAuth, asset.getOne)
-router.get('/assets', auth.adminAuth, asset.getAll)
+router.get('/assets/:id', auth.adminAuth, asset.get)
+router.get('/assets', auth.adminAuth, asset.get)
 router.patch('/assets/:id', auth.adminAuth, asset.edit)
 router.delete('/assets/:id', auth.adminAuth, asset.delete)
 
