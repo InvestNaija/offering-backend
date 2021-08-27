@@ -241,11 +241,12 @@ exports.get = async (req, res, next) => {
         let {page, size, name, open, popular} = req.query;
         let assetId = req.params.id;
         let assets = [];
+        let asset = {};
 
         // check if we are retrieving only one asset
         if (!assetId) return next(new AppError('Asset Id required', 400));
 
-        const asset = await Asset.findByPk(assetId);
+        asset = await Asset.findByPk(assetId);
         if (!asset) return next(new AppError('asset not found', 404));
 
         let resp = {
