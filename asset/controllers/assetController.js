@@ -272,9 +272,6 @@ exports.get = async (req, res, next) => {
             limit,
             offset,
             distinct: true,
-            order: [
-                ['createdAt', 'DESC']
-            ]
         };
 
         // get non-deleted items
@@ -287,6 +284,10 @@ exports.get = async (req, res, next) => {
                 ['popularity', 'DESC']
             ]
         }
+
+        query.order = [
+            ['createdAt', 'DESC']
+        ];
 
         assets = await Asset.findAndCountAll(query);
 
