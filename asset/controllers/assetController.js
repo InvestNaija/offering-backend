@@ -6,6 +6,7 @@ const Customer = db.customers;
 const cloudinary = require('../../config/cloudinary');
 const _ = require('underscore');
 const sendEmail = require('../../config/email');
+const {getPagination, getPagingData} = require("../../config/pagination");
 
 
 exports.create = async (req, res, next) => {
@@ -234,5 +235,79 @@ exports.delete = async (req, res, next) => {
     }
 }
 
+exports.get = async (req, res, next) => {
+    try {
+        let {page, size, name, open, popular} = req.query;
+        let assetId = req.params.id;
+        let assets = [];
 
+        // check if we are retrieving only one asset
+        if (!assetId) return next(new AppError('Asset Id required', 400));
+
+        const asset = await Asset.findByPk(assetId);
+        if (!asset) return next(new AppError('asset not found', 404));
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Asset successfully fetched',
+            data: asset
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+
+
+        // retrieve multiple assets implementation
+        if (page && page >= 0) {
+            page = page -1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
+
+        let query = {
+            limit,
+            offset,
+            distinct: true,
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        };
+
+        // get non-deleted items
+        query.where.deletedAt = null;
+
+        if (name) query.where.name = name
+        if (open) query.where.openForPurchase = true
+        if (popular) {
+            query.order = [
+                ['popularity', 'DESC']
+            ]
+        }
+
+        assets = await Asset.findAndCountAll(query);
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(assets, page, limit);
+
+        resp = {
+            code: 200,
+            status: 'success',
+            message: 'Assets retrieved successfully',
+            data,
+            totalItems,
+            totalPages,
+            currentPage
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error('GET ASSETS ERROR: ', err);
+        return next(err);
+    }
+}
 
