@@ -1020,6 +1020,9 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
                 code: 200,
                 status: 'success',
                 message: 'customer signup successful',
+                data: {
+                    bvnData
+                }
             }
             res.status(resp.code).json(resp);
             res.locals.resp = resp;
@@ -1316,6 +1319,7 @@ exports.firstStepVerification = async (req, res, next) => {
         let {bvn, cscsNo, dob} = req.body;
         let bvnResponse = "";
         let cscsResponse = "";
+        let bvnData = {};
 
         // verify bvn
         const response = await verifyme.verifyBVN(bvn);
@@ -1335,6 +1339,7 @@ exports.firstStepVerification = async (req, res, next) => {
                 const middleName = response.data.middlename ? response.data.middlename : "";
                 const lastName = response.data.lastname ? response.data.lastname : "";
                 bvnResponse = `${firstName} ${middleName} ${lastName}`;
+                bvnData = response.data;
             }
         }
 
@@ -1358,6 +1363,7 @@ exports.firstStepVerification = async (req, res, next) => {
             data: {
                 bvn,
                 bvnResponse,
+                bvnData,
                 cscsNo,
                 cscsResponse
             }
