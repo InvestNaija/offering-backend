@@ -914,7 +914,7 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
         data.accountType = 'mtn'
         data.password = hash;
         data.verified = true;
-        data.gender = bvnData.gender.toLowerCase();
+        data.gender = bvnData?.gender?.toLowerCase();
         data.placeOfBirth = placeOfBirth;
         data.mothersMaidenName = motherMaidenName;
 
