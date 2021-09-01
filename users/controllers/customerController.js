@@ -939,6 +939,9 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
                 code: 200,
                 status: 'success',
                 message: 'customer signup successful',
+                data: {
+                    bvnData
+                }
             }
             res.status(resp.code).json(resp);
             res.locals.resp = resp;
