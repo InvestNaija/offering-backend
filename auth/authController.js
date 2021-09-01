@@ -162,12 +162,19 @@ exports.momoAndCustomerAuth = (req, res, next) => {
         let auth = req.headers['authorization'];
         if(!auth) return next(new AppError('Unauthorised request.', 401));
 
-        const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
-
-        if(auth === process.env.MOMO_SECRET || authorized.role === "customer") {
+        if (auth === process.env.MOMO_SECRET) {
             next();
+        } else if (auth !== process.env.MOMO_SECRET) {
+            const authorized = jwt.verify(auth, process.env.ACCESS_TOKEN_SECRET);
+
+            if(authorized.role === "customer") {
+                next();
+            } else {
+                return next(new AppError('You are unauthorized to access the resource', 401));
+            }
+        } else {
+            return next(new AppError('You are unauthorized to access the resource', 401));
         }
-        else return next(new AppError('You are unauthorized to access the resource', 401));
     } catch (err) {
         return next(err);
     }
