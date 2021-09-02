@@ -863,7 +863,15 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
     try {
         let data = {};
         let {nin, bvn, cscsExist, email, dob, motherMaidenName, placeOfBirth} = req.body;
+
+
         if (!bvn) return next(new AppError('bvn required', 400));
+
+        // check if bvn is a number
+        if (bvn == '' || isNaN(bvn)) {
+            return next(new AppError('bvn should be a number'))
+        }
+
         if (!motherMaidenName || !placeOfBirth) return next(new AppError('motherMaidenName and placeOfBirth required', 400));
         //if (!nin) return next(new AppError('nin required', 400));
         if (cscsExist === undefined) return next(new AppError('cscsExist required', 400));
@@ -1323,6 +1331,20 @@ exports.firstStepVerification = async (req, res, next) => {
         let bvnResponse = "";
         let cscsResponse = "";
         let bvnData = {};
+
+        // verify bvn passed
+        if (!bvn || bvn == '' || isNaN(bvn)) {
+            return next(new AppError('Please enter a valid bvn', 400));
+        }
+
+        if (bvn && (bvn.length < 11 || bvn.length > 11)) {
+            return next(new AppError('BVN should be 11 digits', 400));
+        }
+
+        // verify cscs number
+        if (!cscsNo || cscsNo == '' || isNaN(cscsNo)) {
+            return next(new AppError('Please enter a valid cscsNo', 400));
+        }
 
         // verify bvn
         const response = await verifyme.verifyBVN(bvn);
