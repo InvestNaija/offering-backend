@@ -869,7 +869,7 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
 
         // check if bvn is a number
         if (bvn == '' || isNaN(bvn)) {
-            return next(new AppError('bvn should be a number'))
+            return next(new AppError('bvn should be a number', 400));
         }
 
         if (!motherMaidenName || !placeOfBirth) return next(new AppError('motherMaidenName and placeOfBirth required', 400));
