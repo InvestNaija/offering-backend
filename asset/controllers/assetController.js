@@ -9,13 +9,14 @@ const sendEmail = require('../../config/email');
 const {getPagination, getPagingData} = require("../../config/pagination");
 const {Op} = require('sequelize');
 const moment = require('moment');
+const AssetBankDetails = db.assetsBankDetails;
 
 
 exports.create = async (req, res, next) => {
     try {
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber']);
 
         const openingDate = moment(data.openingDate).format();
         const maturityDate = moment(data.maturityDate).format();
@@ -48,8 +49,18 @@ exports.create = async (req, res, next) => {
         }
 
         data.closingDate = new Date(data.closingDate);
+
         const asset = await Asset.create(data);
-        resp = {
+
+        const newAssetBankDetails = {
+            bankName: data.bankName,
+            accountNumber: data.accountNumber,
+            assetId: asset.id
+        };
+
+        const assetAccountDetails = await AssetBankDetails.create(newAssetBankDetails);
+
+        let resp = {
             code: 201,
             status: 'success',
             message: 'Asset successfully created',
@@ -74,7 +85,7 @@ exports.edit = async (req, res, next) => {
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber']);
 
         const openingDate = moment(editData.openingDate).format();
         const maturityDate = moment(editData.maturityDate).format();
@@ -108,7 +119,15 @@ exports.edit = async (req, res, next) => {
 
         editData.closingDate = new Date(editData.closingDate);
         await Asset.update(editData, {where: {id: assetId}});
-        resp = {
+
+        const newAssetBankDetails = {
+            bankName: data.bankName,
+            accountNumber: data.accountNumber,
+        };
+
+        await AssetBankDetails.update(newAssetBankDetails, {where: {assetId: assetId}});
+
+        let resp = {
             code: 200,
             status: 'success',
             message: 'Asset successfully updated',
