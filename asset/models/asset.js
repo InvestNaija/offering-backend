@@ -39,9 +39,19 @@ module.exports = (sequelize, Sequelize) => {
             defaultValue: false
         },
 
+        openingDate: {
+            type: Sequelize.DATE,
+            defaultValue: null
+        },
+
         closingDate: {
             type: Sequelize.DATE,
             allowNull: false
+        },
+
+        maturityDate: {
+            type: Sequelize.DATE,
+            defaultValue: null,
         },
 
         popularity: {
@@ -50,11 +60,13 @@ module.exports = (sequelize, Sequelize) => {
         },
 
         image: Sequelize.STRING,
+
         currency: {
             type: Sequelize.STRING,
             defaultValue: 'NGN',
             allowNull: true
         },
+
         subaccountId: {
             type: Sequelize.STRING,
             allowNull: true,
@@ -68,6 +80,16 @@ module.exports = (sequelize, Sequelize) => {
         sendReservationEmail: {
             type: Sequelize.BOOLEAN,
             defaultValue: false
+        },
+
+        paymentLabel: {
+            type: Sequelize.STRING,
+            defaultValue: null,
+        },
+
+        paymentLogo: {
+            type: Sequelize.STRING,
+            defaultValue: null,
         }
     }, {
         paranoid: true,
