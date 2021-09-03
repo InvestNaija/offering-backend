@@ -8,12 +8,32 @@ const _ = require('underscore');
 const sendEmail = require('../../config/email');
 const {getPagination, getPagingData} = require("../../config/pagination");
 const {Op} = require('sequelize');
+const moment = require('moment');
 
 
 exports.create = async (req, res, next) => {
     try {
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
-            'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency']);
+            'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo']);
+
+        const openingDate = moment(data.openingDate).format();
+        const maturityDate = moment(data.maturityDate).format();
+        const closingDate = moment(data.closingDate).format();
+
+        // check if opening date is greater than current date.
+        if (openingDate >  closingDate) {
+            return next(new AppError('Opening Date should be earlier than Closing Date', 400));
+        }
+
+        if (closingDate > maturityDate) {
+            return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
+        }
+
+        // upload payment logo
+        const paymentLogoUploadResult = await cloudinary.uploadImage(data.paymentLogo);
+
+        data.paymentLogo = paymentLogoUploadResult.secure_url;
 
         // if subaccount id was passed
         if (req.body.subaccountId) {
@@ -52,23 +72,42 @@ exports.create = async (req, res, next) => {
 exports.edit = async (req, res, next) => {
     try {
         let assetId = req.params.id;
-        let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
-            'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency']);
+        let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
+            'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo']);
+
+        const openingDate = moment(editData.openingDate).format();
+        const maturityDate = moment(editData.maturityDate).format();
+        const closingDate = moment(editData.closingDate).format();
+
+        // check if opening date is greater than current date.
+        if (openingDate >  closingDate) {
+            return next(new AppError('Opening Date should be earlier than Closing Date', 400));
+        }
+
+        if (closingDate > maturityDate) {
+            return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
+        }
+
+        // upload payment logo
+        const paymentLogoUploadResult = await cloudinary.uploadImage(editData.paymentLogo);
+
+        editData.paymentLogo = paymentLogoUploadResult.secure_url;
 
         // if subaccount id was passed
         if (req.body.subaccountId) {
-            data.subaccountId = req.body.subaccountId;
+            editData.subaccountId = req.body.subaccountId;
         } else {
-            data.subaccountId = 'null';
+            editData.subaccountId = 'null';
         }
 
         // check if currency is passed
-        if (!data.currency) {
-            data.currency = 'NGN';
+        if (!editData.currency) {
+            editData.currency = 'NGN';
         }
 
-        data.closingDate = new Date(data.closingDate);
-        await Asset.update(data, {where: {id: assetId}});
+        editData.closingDate = new Date(editData.closingDate);
+        await Asset.update(editData, {where: {id: assetId}});
         resp = {
             code: 200,
             status: 'success',
@@ -83,7 +122,7 @@ exports.edit = async (req, res, next) => {
             if (response.secure_url) await Asset.update({image: response.secure_url}, {where: {id: assetId}});
             console.log('asset image updated');
         }
-        if (data.openForPurchase) {
+        if (editData.openForPurchase) {
             const pendingReservations = await Reservation.findAll({
                 where: {assetId, paid: false},
                 include: ['customer', 'asset']
