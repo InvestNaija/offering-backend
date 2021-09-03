@@ -16,7 +16,8 @@ exports.create = async (req, res, next) => {
     try {
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber',
+            'logo', 'subaccountId']);
 
         const openingDate = moment(data.openingDate).format();
         const maturityDate = moment(data.maturityDate).format();
@@ -85,7 +86,8 @@ exports.edit = async (req, res, next) => {
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber',
+            'logo', 'subaccountId']);
 
         const openingDate = moment(editData.openingDate).format();
         const maturityDate = moment(editData.maturityDate).format();

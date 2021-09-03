@@ -90,6 +90,11 @@ module.exports = (sequelize, Sequelize) => {
         paymentLogo: {
             type: Sequelize.STRING,
             defaultValue: null,
+        },
+
+        logo: {
+            type: Sequelize.STRING,
+            defaultValue: null,
         }
     }, {
         paranoid: true,
