@@ -16,7 +16,7 @@ exports.create = async (req, res, next) => {
     try {
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber',
+            'openingDate', 'maturityDate', 'paymentLabel', 'bankName', 'accountNumber',
             'logo', 'subaccountId']);
 
         const openingDate = moment(data.openingDate).format();
@@ -31,11 +31,6 @@ exports.create = async (req, res, next) => {
         if (closingDate > maturityDate) {
             return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
         }
-
-        // upload payment logo
-        const paymentLogoUploadResult = await cloudinary.uploadImage(data.paymentLogo);
-
-        data.paymentLogo = paymentLogoUploadResult.secure_url;
 
         // if subaccount id was passed
         if (req.body.subaccountId) {
@@ -68,12 +63,24 @@ exports.create = async (req, res, next) => {
             data: asset
         }
         res.status(resp.code).json(resp);
+
+        // upload payment logo
+        let {paymentLogo} = req.body;
+        if (paymentLogo) {
+            const paymentLogoUploadResult = await cloudinary.uploadImage(paymentLogo);
+
+            if (paymentLogoUploadResult.secure_url) {
+                await Asset.update({paymentLogo: paymentLogoUploadResult.secure_url}, {where: {id: asset.id}});
+                console.log('asset payment logo created');
+            }
+        }
+
         let {image} = req.body;
         res.locals.resp = resp;
         if (image) {
             const response = await cloudinary.uploadImage(image);
             if (response.secure_url) await Asset.update({image: response.secure_url}, {where: {id: asset.id}});
-            console.log('asset image updated');
+            console.log('asset image created');
         }
         return next();
     } catch (error) {
@@ -86,7 +93,7 @@ exports.edit = async (req, res, next) => {
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'paymentLogo', 'bankName', 'accountNumber',
+            'openingDate', 'maturityDate', 'paymentLabel', 'bankName', 'accountNumber',
             'logo', 'subaccountId']);
 
         const openingDate = moment(editData.openingDate).format();
@@ -101,11 +108,6 @@ exports.edit = async (req, res, next) => {
         if (closingDate > maturityDate) {
             return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
         }
-
-        // upload payment logo
-        const paymentLogoUploadResult = await cloudinary.uploadImage(editData.paymentLogo);
-
-        editData.paymentLogo = paymentLogoUploadResult.secure_url;
 
         // if subaccount id was passed
         if (req.body.subaccountId) {
@@ -122,12 +124,14 @@ exports.edit = async (req, res, next) => {
         editData.closingDate = new Date(editData.closingDate);
         await Asset.update(editData, {where: {id: assetId}});
 
-        const newAssetBankDetails = {
-            bankName: data.bankName,
-            accountNumber: data.accountNumber,
-        };
+        if (editData.bankName && editData.accountNumber) {
+            const newAssetBankDetails = {
+                bankName: editData.bankName,
+                accountNumber: editData.accountNumber,
+            };
 
-        await AssetBankDetails.update(newAssetBankDetails, {where: {assetId: assetId}});
+            await AssetBankDetails.update(newAssetBankDetails, {where: {assetId: assetId}});
+        }
 
         let resp = {
             code: 200,
@@ -136,6 +140,18 @@ exports.edit = async (req, res, next) => {
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
+
+        // upload payment logo
+        let {paymentLogo} = req.body;
+        if (paymentLogo) {
+            const paymentLogoUploadResult = await cloudinary.uploadImage(paymentLogo);
+
+            if (paymentLogoUploadResult.secure_url) {
+                await Asset.update({paymentLogo: paymentLogoUploadResult.secure_url}, {where: {id: assetId}});
+                console.log('asset payment logo updated');
+            }
+        }
+
         let {image} = req.body;
         if (image) {
             const response = await cloudinary.uploadImage(image);
@@ -143,6 +159,7 @@ exports.edit = async (req, res, next) => {
             if (response.secure_url) await Asset.update({image: response.secure_url}, {where: {id: assetId}});
             console.log('asset image updated');
         }
+
         if (editData.openForPurchase) {
             const pendingReservations = await Reservation.findAll({
                 where: {assetId, paid: false},
