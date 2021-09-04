@@ -14,10 +14,10 @@ const AssetBankDetails = db.assetsBankDetails;
 
 exports.create = async (req, res, next) => {
     try {
+        let {bankName, accountNumber} = req.body;
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'bankName', 'accountNumber',
-            'logo', 'subaccountId']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
 
         const openingDate = moment(data.openingDate).format();
         const maturityDate = moment(data.maturityDate).format();
@@ -48,13 +48,7 @@ exports.create = async (req, res, next) => {
 
         const asset = await Asset.create(data);
 
-        const newAssetBankDetails = {
-            bankName: data.bankName,
-            accountNumber: data.accountNumber,
-            assetId: asset.id
-        };
 
-        const assetAccountDetails = await AssetBankDetails.create(newAssetBankDetails);
 
         let resp = {
             code: 201,
@@ -63,6 +57,16 @@ exports.create = async (req, res, next) => {
             data: asset
         }
         res.status(resp.code).json(resp);
+
+        if (bankName && accountNumber) {
+            const newAssetBankDetails = {
+                bankName,
+                accountNumber,
+                assetId: asset.id
+            };
+
+            const assetAccountDetails = await AssetBankDetails.create(newAssetBankDetails);
+        }
 
         // upload payment logo
         let {paymentLogo} = req.body;
@@ -90,11 +94,11 @@ exports.create = async (req, res, next) => {
 
 exports.edit = async (req, res, next) => {
     try {
+        let {bankName, accountNumber} = req.body;
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'bankName', 'accountNumber',
-            'logo', 'subaccountId']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
 
         const openingDate = moment(editData.openingDate).format();
         const maturityDate = moment(editData.maturityDate).format();
@@ -124,15 +128,6 @@ exports.edit = async (req, res, next) => {
         editData.closingDate = new Date(editData.closingDate);
         await Asset.update(editData, {where: {id: assetId}});
 
-        if (editData.bankName && editData.accountNumber) {
-            const newAssetBankDetails = {
-                bankName: editData.bankName,
-                accountNumber: editData.accountNumber,
-            };
-
-            await AssetBankDetails.update(newAssetBankDetails, {where: {assetId: assetId}});
-        }
-
         let resp = {
             code: 200,
             status: 'success',
@@ -140,6 +135,15 @@ exports.edit = async (req, res, next) => {
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
+
+        if (bankName && accountNumber) {
+            const newAssetBankDetails = {
+                bankName,
+                accountNumber,
+            };
+
+            await AssetBankDetails.update(newAssetBankDetails, {where: {assetId: assetId}});
+        }
 
         // upload payment logo
         let {paymentLogo} = req.body;
