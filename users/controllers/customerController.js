@@ -1331,9 +1331,11 @@ exports.firstStepVerification = async (req, res, next) => {
         let bvnResponse = "";
         let cscsResponse = "";
         let bvnData = {};
+        let response = {};
+        let cscsVerification = {};
 
         // verify bvn passed
-        if (!bvn || bvn == '' || isNaN(bvn)) {
+        if (bvn && (bvn == '' || isNaN(bvn))) {
             return next(new AppError('Please enter a valid bvn', 400));
         }
 
@@ -1342,17 +1344,18 @@ exports.firstStepVerification = async (req, res, next) => {
         }
 
         // verify cscs number
-        if (!cscsNo || cscsNo == '' || isNaN(cscsNo)) {
+        if (cscsNo && (cscsNo == '' || isNaN(cscsNo))) {
             return next(new AppError('Please enter a valid cscsNo', 400));
         }
 
         // verify bvn
-        const response = await verifyme.verifyBVN(bvn);
+        if (bvn) {
+            response = await verifyme.verifyBVN(bvn);
+        }
 
-        if (!response) {
-            bvnResponse = "Response was not received from BVN endpoint";
-        } else if (response.status !== "success") {
-            bvnResponse = response.message ? response.message : "BVN request failed with unknown error";
+
+        if (response?.status !== "success") {
+            bvnResponse = response.message ? response.message : "BVN request failed with an unknown error";
         } else {
             let formattedDob = moment(dob, 'DD-MM-YYYY').format('DDMMYYYY');
             let formattedBvnDate = response.data.birthdate.replace(/-/g, '');
@@ -1370,11 +1373,12 @@ exports.firstStepVerification = async (req, res, next) => {
 
 
         // verify cscs
-        const cscsVerification = await cscs.verifyCSCS(cscsNo);
+        if (cscsNo) {
+            cscsVerification = await cscs.verifyCSCS(cscsNo);
+        }
 
-        if (!cscsVerification) {
-            cscsResponse = 'Error verifying CSCS';
-        } else if (cscsVerification.ResponseCode != 200) {
+
+        if (cscsVerification?.ResponseCode != 200) {
             cscsResponse = 'CSCS Number is not valid';
         } else {
             const cscsAccountName = cscsVerification.AccountName ? cscsVerification.AccountName : "Account Name not found";
