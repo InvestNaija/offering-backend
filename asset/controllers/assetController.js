@@ -19,8 +19,9 @@ exports.create = async (req, res, next) => {
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
             'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
 
+        const currentDate = new Date().toISOString();
         const openingDate = moment(data.openingDate).format();
-        const maturityDate = moment(data.maturityDate).format();
+        //const maturityDate = moment(data.maturityDate).format();
         const closingDate = moment(data.closingDate).format();
 
         // check if opening date is greater than current date.
@@ -28,8 +29,8 @@ exports.create = async (req, res, next) => {
             return next(new AppError('Opening Date should be earlier than Closing Date', 400));
         }
 
-        if (closingDate > maturityDate) {
-            return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
+        if (closingDate < currentDate) {
+            return next(new AppError('Closing Date should be greater than current date', 400));
         }
 
         // if subaccount id was passed
@@ -100,8 +101,9 @@ exports.edit = async (req, res, next) => {
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
             'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
 
+        const currentDate = new Date().toISOString();
         const openingDate = moment(editData.openingDate).format();
-        const maturityDate = moment(editData.maturityDate).format();
+        // const maturityDate = moment(editData.maturityDate).format();
         const closingDate = moment(editData.closingDate).format();
 
         // check if opening date is greater than current date.
@@ -109,8 +111,8 @@ exports.edit = async (req, res, next) => {
             return next(new AppError('Opening Date should be earlier than Closing Date', 400));
         }
 
-        if (closingDate > maturityDate) {
-            return next(new AppError('Closing Date should be earlier than Maturity Date', 400));
+        if (closingDate < currentDate) {
+            return next(new AppError('Closing Date should be greater than Current date', 400));
         }
 
         // if subaccount id was passed
