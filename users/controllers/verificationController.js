@@ -25,8 +25,15 @@ exports.verifyBVN = async (req, res, next) => {
         // let formattedDOB = moment(dob).format('DD/MM/YYYY')
         // let formattedBVNDate = moment(response.data.date_of_birth).format('DDMMYYYY');
 
-        if (response?.status !== 'success') return next(new AppError(response.message ? response.message : "Failed to verify BVN",
-            response.statusCode ? response.statusCode : 400));
+        // check if a valid response is provided
+        if (!response) {
+            return next(new AppError('BVN Verification Failed', 400));
+        }
+
+        if (response?.status !== 'success') {
+            return next(new AppError(response.message ? response.message : "Failed to verify BVN",
+                response.statusCode ? response.statusCode : 400));
+        }
         let formattedDOB = moment(dob).format('DDMMYYYY');
         let formattedBVNDate = response?.data?.birthdate.replace(/-/g, '');
 
