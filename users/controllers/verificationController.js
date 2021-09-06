@@ -12,13 +12,19 @@ const _ = require('underscore');
 
 exports.verifyBVN = async (req, res, next) => {
     try {
+        let response = {};
         let {bvn, dob, firstname, lastname} = req.body;
         if (!bvn) return next(new AppError('BVN is required', 400));
         const bvnExists = await Customer.findOne({where: {bvn}});
         if (bvnExists) return next(new AppError('A user is already signed up with this bvn', 409));
 
         //verify bvn using VerifyMe implementation
-        const response = await verifyme.verifyBVN(bvn, firstname, lastname);
+        if (bvn && bvn.length === 11) {
+            response = await verifyme.verifyBVN(bvn, firstname, lastname);
+        } else {
+            return next(new AppError('BVN should have 11 characters', 400));
+        }
+
 
         // verify bvn using flutterwave implementation
         // const response = await flutterwave.verifyBVN(bvn);
