@@ -194,10 +194,13 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
     }
 }
 
-exports.getAll = async (req, res, next) => {
+exports. getAll = async (req, res, next) => {
     try {
         let {page, size} = req.query;
-        let transactions = {};
+        let transactions = [];
+        let reservationId = '';
+        let assetId = '';
+        let assetsData = {};
 
         if (page && page >= 0) {
             page = page - 1;
@@ -217,6 +220,27 @@ exports.getAll = async (req, res, next) => {
                 ['createdAt', 'DESC']
             ]
         });
+
+        for (const transaction of transactions.rows) {
+            // check if we have already retrieved reservation id
+            if (transaction.reservation !== reservationId) {
+                reservationId = transaction.reservation;
+                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+                // check if we have already retrieved asset id
+                if (reservation && (reservation.assetId !== assetId)) {
+                    assetId = reservation.assetId;
+                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                    if (asset) {
+                        assetsData = asset.dataValues;
+                        transaction.dataValues.asset = asset.dataValues;
+                    }
+                } else {
+                    transaction.dataValues.asset = assetsData;
+                }
+            } else {
+                transaction.dataValues.asset = assetsData;
+            }
+        }
 
         let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
 
