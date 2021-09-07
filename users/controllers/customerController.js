@@ -24,7 +24,7 @@ const KycDocuments = db.kycDocuments;
 const path = require('path');
 const {Op} = require('sequelize');
 const {getPagination, getPagingData} = require("../../config/pagination");
-require('dotenv').config();
+const EmailValidator = require('email-validator');
 
 
 exports.signup = async (req, res, next) => {
@@ -864,6 +864,9 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
         let data = {};
         let {nin, bvn, cscsExist, email, dob, motherMaidenName, placeOfBirth} = req.body;
 
+        if (!EmailValidator.validate(email)) {
+            return next(new AppError('Email is not valid', 400));
+        }
 
         if (!bvn) return next(new AppError('bvn required', 400));
 
