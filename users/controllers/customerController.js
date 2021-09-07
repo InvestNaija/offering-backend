@@ -901,7 +901,12 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
 
         // get bvn data from verifyme for verification
         let bvnData = await verifyme.verifyBVN(bvn);
-        bvnData = bvnData.data;
+
+        if (!bvnData?.data) {
+            return next(new AppError('BVN verification failed', 400));
+        }
+
+        bvnData = bvnData?.data;
 
         // check if bvn date of birth matches date of birth passed
         let userDob = moment(dob, 'DD-MM-YYYY').format('DD-MM-YYYY');

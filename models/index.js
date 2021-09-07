@@ -57,6 +57,7 @@ db.cscsLogs = require('../users/models/cscsLogs')(sequelize, Sequelize);
 db.kycDocuments = require('../users/models/kycDocuments')(sequelize, Sequelize);
 db.bvnData = require('../users/models/bvnData')(sequelize, Sequelize);
 db.assetsBankDetails = require('../asset/models/assetBankDetails')(sequelize, Sequelize);
+db.roles = require('../users/models/role')(sequelize, Sequelize);
 
 db.wallets.belongsTo(db.customers, {
     foreignKey: "customerId",
@@ -126,6 +127,14 @@ db.kycDocuments.belongsTo(db.customers, {
 db.assetsBankDetails.belongsTo(db.assets, {
     foreignKey: "assetId",
     as: "asset"
+})
+
+db.admins.belongsToMany(db.roles, {
+    through: 'Admin_Roles'
+})
+
+db.roles.belongsToMany(db.admins, {
+    through: 'Admin_Roles'
 })
 
 db.sequelize.authenticate().then(() => console.log('PstgrsDb connected....')).catch(err => console.log('Error connecting to pstgrsDb...', err))
