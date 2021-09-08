@@ -25,6 +25,7 @@ const path = require('path');
 const {Op} = require('sequelize');
 const {getPagination, getPagingData} = require("../../config/pagination");
 const EmailValidator = require('email-validator');
+const BvnData = db.bvnData;
 
 
 exports.signup = async (req, res, next) => {
@@ -112,6 +113,12 @@ exports.signup = async (req, res, next) => {
         }
         sendEmail(opts).then(r => console.log('OTP email sent to customer: ' + customer.email)).catch(err => console.log('error sending otp email', err));
 
+        // add bvn data to bvn table
+        let bvnResponse = await verifyme.verifyBVN(post.bvn);
+
+        if (bvnResponse) {
+
+        }
         return next();
     } catch (error) {
         return next(error);
@@ -622,9 +629,11 @@ exports.createCSCSAccount = async (req, res, next) => {
         if (!req.user) return next(new AppError('Please login to access this resource', 401));
         let customerId;
         let customer;
+        let customerBvnData;
         if (req.user.role === 'customer') {
             customerId = req.user.id;
             customer = await Customer.findByPk(customerId);
+            // customerBvnData = await BvnData.findOne({where: {bvn: customer.bvn}});
         } else {
             let {bvn} = req.body;
             if (!bvn) return next(new AppError('customer BVN is required', 400));
@@ -879,7 +888,7 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
         //if (!nin) return next(new AppError('nin required', 400));
         if (cscsExist === undefined) return next(new AppError('cscsExist required', 400));
         if (typeof (cscsExist) !== 'boolean') return next(new AppError('cscs status requires boolean type', 400));
-        let request = ['email', 'address'];
+        let request = ['email'];
         request.map(item => {
             if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
             data[item] = req.body[item]
@@ -982,7 +991,7 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
             if (data.gender === 'male') cscsData.Gender = 'M';
             else if (data.gender === 'female') cscsData.Gender = 'F';
             cscsData.MadianName = motherMaidenName;
-            cscsData.Address1 = data.address.slice(0, 39);
+            cscsData.Address1 = bvnData?.residentialAddress.slice(0, 39);
             cscsData.BirthDate = moment(dob, 'DD-MM-YYYY').format();
             cscsData.Phone1 = data.phone;
             cscsData.Email = data.email;
