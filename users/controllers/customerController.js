@@ -942,6 +942,7 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
         data.gender = bvnData?.gender?.toLowerCase();
         data.placeOfBirth = placeOfBirth;
         data.mothersMaidenName = motherMaidenName;
+        data.address = bvnData?.residentialAddress;
 
         let customer;
         console.log(data);
