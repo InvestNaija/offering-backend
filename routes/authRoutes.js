@@ -30,4 +30,6 @@ router.post('/brokers/change-password', auth.brokerAuth, broker.changePassword)
 router.post('/brokers/forgot-password', broker.forgotPasswordBroker)
 router.post('/brokers/reset-password/:token', broker.resetPassword)
 
+router.post('/create-role', auth.createRole)
+
 module.exports = router;

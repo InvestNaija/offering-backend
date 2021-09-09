@@ -2,6 +2,7 @@ const AppError = require('../config/appError');
 const jwt = require('jsonwebtoken');
 const db = require('../models/index');
 const session = require('chd-session-mgt');
+const Role = db.roles;
 
 exports.createAccessToken = (signature) => {
     try {
@@ -175,6 +176,27 @@ exports.momoAndCustomerAuth = (req, res, next) => {
         } else {
             return next(new AppError('You are unauthorized to access the resource', 401));
         }
+    } catch (err) {
+        return next(err);
+    }
+}
+
+exports.createRole = async (req, res, next) => {
+    try {
+        let {module, permission} = req.body;
+
+        const newRole = await Role.create({module, permission});
+
+        let resp = {
+            code: 201,
+            status: 'success',
+            data: newRole,
+            message: 'Role created successfully'
+        }
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+        return next();
     } catch (err) {
         return next(err);
     }

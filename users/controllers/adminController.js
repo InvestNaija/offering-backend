@@ -3,7 +3,9 @@ const AppError = require('../../config/appError');
 const bcrypt = require('bcryptjs');
 const auth = require('../../auth/authController');
 const Admin = db.admins;
+const Role = db.roles;
 const cloudinary = require('../../config/cloudinary');
+const Admin_Roles = db.Admin_Roles;
 const sendEmail = require("../../config/email");
 
 exports.signup = async(req, res, next) => {
@@ -183,6 +185,36 @@ exports.changePassword = async (req, res, next) => {
         return next();
     } catch (err) {
         console.error('ChangePassword Error: ', err);
+        return next(err);
+    }
+}
+
+exports.assignToRole = async (req, res, next) => {
+    try {
+        let adminId = req.params.id;
+        let {roles} = req.body;
+        let newAdminRole;
+
+        const admin = await Admin.findByPk(adminId);
+
+        // add admin to roles
+        for (const role of roles) {
+            newAdminRole = await Admin_Roles.create({adminId, roleId: role.roleId});
+        }
+
+        let resp = {
+            code: 201,
+            status: 'success',
+            data: newAdminRole,
+            message: 'User added to role successfully'
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+        return next();
+    } catch (err) {
+        console.error('Assign to Role Error: ', err);
         return next(err);
     }
 }
