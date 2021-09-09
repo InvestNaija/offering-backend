@@ -205,8 +205,8 @@ exports.assignToRole = async (req, res, next) => {
         let resp = {
             code: 201,
             status: 'success',
+            message: 'User added to role successfully',
             data: newAdminRole,
-            message: 'User added to role successfully'
         }
 
         res.status(resp.code).json(resp);

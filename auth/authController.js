@@ -196,14 +196,65 @@ exports.createRole = async (req, res, next) => {
         let resp = {
             code: 201,
             status: 'success',
-            data: newRole,
-            message: 'Role created successfully'
+            message: 'Role created successfully',
+            data: newRole
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
 
         return next();
     } catch (err) {
+        return next(err);
+    }
+}
+
+exports.getRoles = async (req, res, next) => {
+    try {
+        let roles = await Role.findAll();
+
+        if (!roles) {
+            roles = [];
+        }
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Roles retrieved successfully',
+            data: roles
+        }
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+        return next();
+    } catch (err) {
+        console.error('Get Roles Error: ', err);
+        return next(err);
+    }
+}
+
+exports.getRole = async (req, res, next) => {
+    try {
+        let roleId = req.params.id;
+
+        const role = await Role.findByPk(roleId);
+
+        if (!role) {
+            return next(new AppError(`Role with id: ${roleId} does not exist`, 400));
+        }
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Role retrieved successfully',
+            data: role
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+        return next();
+    } catch (err) {
+        console.error('Get Role Error: ', err);
         return next(err);
     }
 }
