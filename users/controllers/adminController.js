@@ -197,8 +197,18 @@ exports.assignToRole = async (req, res, next) => {
 
         const admin = await Admin.findByPk(adminId);
 
+        if (!admin) {
+            return next(new AppError('Admin does not exist', 400));
+        }
+
         // add admin to roles
         for (const role of roles) {
+            const role = await Role.findByPk(role.roleId);
+
+            if (!role) {
+                return next(new AppError('Role does not exist', 400));
+            }
+
             newAdminRole = await Admin_Roles.create({adminId, roleId: role.roleId});
         }
 
