@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../models/index');
 const session = require('chd-session-mgt');
 const Role = db.roles;
+const {Op} = require('sequelize');
 
 exports.createAccessToken = (signature) => {
     try {
@@ -185,6 +186,11 @@ exports.createRole = async (req, res, next) => {
     try {
         let {module, permission} = req.body;
 
+        let roleExists = await Role.findOne({where: {[Op.or]: [{module, permission}]}});
+
+        if (roleExists) {
+            return next(new AppError('Role already exists', 400));
+        }
         const newRole = await Role.create({module, permission});
 
         let resp = {
