@@ -10,6 +10,7 @@ const {getPagination, getPagingData} = require("../../config/pagination");
 const {Op} = require('sequelize');
 const moment = require('moment');
 const AssetBankDetails = db.assetsBankDetails;
+const Transaction = db.transactions;
 
 
 exports.create = async (req, res, next) => {
@@ -232,15 +233,49 @@ exports.getAll = async (req, res, next) => {
 
 exports.getOne = async (req, res, next) => {
     try {
-        let assetid = req.params.id;
-        if (!assetid) return next(new AppError('assedId required', 400));
-        const asset = await Asset.findByPk(assetid);
+        let assetId = req.params.id;
+        let customerId = req.user.id;
+        let transactions = [];
+        if (!assetId) return next(new AppError('assedId required', 400));
+        const asset = await Asset.findByPk(assetId);
         if (!asset) return next(new AppError('asset not found', 404));
+
+
+        const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, customerId, status: 'paid'}]}});
+
+        if (!reservations) {
+            return next(new AppError('Customer has no transaction', 400));
+        }
+
+        for (let reservation of reservations) {
+            let transaction = await Transaction.find({
+                where: {
+                    [Op.and]:
+                        {
+                            reservation: reservation.id,
+                            customerId,
+                            status: 'success'
+                        }
+                }
+            });
+
+            transactions.push(...transaction);
+        }
+
+        transactions.sort(function(a,b){
+            // Turn your strings into dates, and then subtract them
+            // to get a value that is either negative, positive, or zero.
+            return new Date(b.date) - new Date(a.date);
+        });
+
         let resp = {
             code: 200,
             status: 'success',
             message: 'Asset successfully fetched',
-            data: asset
+            data: {
+                asset,
+                transaction: transactions[0]
+            }
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;

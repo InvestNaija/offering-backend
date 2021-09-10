@@ -41,6 +41,6 @@ router.route('/next-of-kin')
 
 router.post('/mini-signup', customer.miniSignup)
 
-router.get('/asset/first-transaction/:id', auth.customerAuth, customer.getFirstTransactionForAsset)
+//router.get('/asset/first-transaction/:id', auth.customerAuth, customer.getFirstTransactionForAsset)
 
 module.exports = router;
