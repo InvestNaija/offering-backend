@@ -59,6 +59,7 @@ db.bvnData = require('../users/models/bvnData')(sequelize, Sequelize);
 db.assetsBankDetails = require('../asset/models/assetBankDetails')(sequelize, Sequelize);
 db.roles = require('../users/models/role')(sequelize, Sequelize);
 db.Admin_Roles = require('../users/models/Admin_Roles')(sequelize, Sequelize);
+db.emailLogs = require('./email_log');
 
 db.wallets.belongsTo(db.customers, {
     foreignKey: "customerId",

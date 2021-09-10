@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const log = require('../log/logController');
 
 const sendEmail = async options => {
     // 1) Create a transporter
@@ -25,6 +26,7 @@ const sendEmail = async options => {
 
     // 3) Actually send the email
     await transporter.sendMail(mailOptions);
+    log.logRequest(req)
 };
 
 module.exports = sendEmail;

@@ -26,6 +26,8 @@ const {Op} = require('sequelize');
 const {getPagination, getPagingData} = require("../../config/pagination");
 const EmailValidator = require('email-validator');
 const BvnData = db.bvnData;
+const Reservation = db.reservations;
+const Transaction = db.transactions;
 
 
 exports.signup = async (req, res, next) => {
@@ -1421,6 +1423,55 @@ exports.firstStepVerification = async (req, res, next) => {
         return next();
     } catch (err) {
         console.error('First Step Verification faile with Error: ', err);
+        return next(err);
+    }
+}
+
+exports.getFirstTransactionForAsset = async (req, res, next) => {
+    try {
+        let assetId = req.params.id;
+        let customerId = req.user.id;
+        let transactions = [];
+
+        const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, customerId, status: 'paid'}]}});
+
+        if (!reservations) {
+            return next(new AppError('Customer has no transaction', 400));
+        }
+
+        for (let reservation of reservations) {
+            let transaction = await Transaction.find({
+                where: {
+                    [Op.and]:
+                        {
+                            reservation: reservation.id,
+                            customerId,
+                            status: 'success'
+                        }
+                }
+            });
+
+            transactions.push(...transaction);
+        }
+
+        transactions.sort(function(a,b){
+            // Turn your strings into dates, and then subtract them
+            // to get a value that is either negative, positive, or zero.
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Transaction returned successfully',
+            data: transactions[0]
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (err) {
+        console.error('Get First Transaction For Asset Error: ', err);
         return next(err);
     }
 }

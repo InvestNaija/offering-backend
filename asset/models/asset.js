@@ -95,6 +95,11 @@ module.exports = (sequelize, Sequelize) => {
         logo: {
             type: Sequelize.STRING,
             defaultValue: null,
+        },
+
+        subsequentMinAmount: {
+            type: Sequelize.DOUBLE,
+            defaultValue: null
         }
     }, {
         paranoid: true,
