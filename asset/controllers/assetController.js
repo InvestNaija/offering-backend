@@ -17,7 +17,7 @@ exports.create = async (req, res, next) => {
         let {bankName, accountNumber} = req.body;
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount']);
 
         const currentDate = new Date().toISOString();
         const openingDate = moment(data.openingDate).format();
@@ -38,6 +38,11 @@ exports.create = async (req, res, next) => {
             data.subaccountId = req.body.subaccountId;
         } else {
             data.subaccountId = 'null';
+        }
+
+        // check if subsequentMinAmount is defined
+        if (!data.subsequentMinAmount) {
+            data.subsequentMinAmount = 0;
         }
 
         // check if currency is passed
@@ -99,7 +104,7 @@ exports.edit = async (req, res, next) => {
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount']);
 
         const currentDate = new Date().toISOString();
         const openingDate = moment(editData.openingDate).format();
@@ -120,6 +125,11 @@ exports.edit = async (req, res, next) => {
             editData.subaccountId = req.body.subaccountId;
         } else {
             editData.subaccountId = 'null';
+        }
+
+        // check if subsequentMinAmount is defined
+        if (!data.subsequentMinAmount) {
+            data.subsequentMinAmount = 0;
         }
 
         // check if currency is passed
