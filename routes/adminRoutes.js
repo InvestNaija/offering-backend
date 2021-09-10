@@ -13,5 +13,6 @@ router.patch('/assets/:id', auth.adminAuth, asset.edit)
 router.delete('/assets/:id', auth.adminAuth, asset.delete)
 
 router.post('/assign-role/:id', auth.adminAuth, admin.assignToRole)
+router.post('/create-user', auth.adminAuth, admin.createAdminUser)
 
 module.exports = router;

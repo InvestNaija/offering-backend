@@ -7,6 +7,7 @@ const Role = db.roles;
 const cloudinary = require('../../config/cloudinary');
 const Admin_Roles = db.Admin_Roles;
 const sendEmail = require("../../config/email");
+const moment = require("moment");
 
 exports.signup = async(req, res, next) => {
     try {
@@ -203,13 +204,13 @@ exports.assignToRole = async (req, res, next) => {
 
         // add admin to roles
         for (const role of roles) {
-            const role = await Role.findByPk(role.roleId);
+            const foundRole = await Role.findByPk(role.roleId);
 
-            if (!role) {
+            if (!foundRole) {
                 return next(new AppError('Role does not exist', 400));
             }
 
-            newAdminRole = await Admin_Roles.create({adminId, roleId: role.roleId});
+            newAdminRole = await Admin_Roles.create({adminId, roleId: foundRole.id});
         }
 
         let resp = {
@@ -225,6 +226,52 @@ exports.assignToRole = async (req, res, next) => {
         return next();
     } catch (err) {
         console.error('Assign to Role Error: ', err);
+        return next(err);
+    }
+}
+
+exports.createAdminUser = async (req, res, next) => {
+    try {
+        let {firstname, lastname, phone, email, dob, roles} = req.body;
+
+        let request = ['firstname', 'lastname', 'email', 'phone', 'dob'];
+
+        for (let i = 0; i < request.length; i++) {
+            if (!req.body[request[i]] || req.body[request[i]] === "") {
+                return next(new AppError(`${request[i]} is required`, 400));
+            }
+        }
+
+        dob = moment(dob, "DD-MM-YYYY").format();
+
+        const newAdminUser = await Admin.create({email, firstName: firstname, lastName: lastname, dob, phone});
+
+        if (newAdminUser && roles) {
+            // add admin to role
+            for (const role of roles) {
+                const foundRole = await Role.findByPk(role.roleId);
+
+                if (!foundRole) {
+                    return next(new AppError('Role does not exist', 400));
+                }
+
+                const newAdminRole = await Admin_Roles.create({adminId: newAdminUser.id, roleId: foundRole.id});
+            }
+        }
+
+        let resp = {
+            code: 201,
+            status: 'success',
+            message: 'Admin created and added to role successfully',
+            data: newAdminUser,
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+        return next();
+    } catch (err) {
+        console.error('Create Admin User Error: ', err);
         return next(err);
     }
 }
