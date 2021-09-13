@@ -18,19 +18,28 @@ exports.create = async (req, res, next) => {
         let {bankName, accountNumber} = req.body;
         let data = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount',
+            'allocationDate', 'fundingDate']);
 
         const currentDate = new Date().toISOString();
-        const openingDate = moment(data.openingDate).format();
+        data.openingDate = new Date(data.openingDate).toISOString();
         //const maturityDate = moment(data.maturityDate).format();
-        const closingDate = moment(data.closingDate).format();
+        data.closingDate = new Date(data.closingDate).toISOString();
+
+        if (data.allocationDate) {
+            data.allocationDate = new Date(data.allocationDate).toISOString();
+        }
+
+        if (data.fundingDate) {
+            data.fundingDate = new Date(data.fundingDate).toISOString();
+        }
 
         // check if opening date is greater than current date.
-        if (openingDate >  closingDate) {
+        if (data.openingDate > data.closingDate) {
             return next(new AppError('Opening Date should be earlier than Closing Date', 400));
         }
 
-        if (closingDate < currentDate) {
+        if (data.closingDate < currentDate) {
             return next(new AppError('Closing Date should be greater than current date', 400));
         }
 
@@ -51,10 +60,7 @@ exports.create = async (req, res, next) => {
             data.currency = 'NGN';
         }
 
-        data.closingDate = new Date(data.closingDate);
-
         const asset = await Asset.create(data);
-
 
 
         let resp = {
@@ -105,20 +111,29 @@ exports.edit = async (req, res, next) => {
         let assetId = req.params.id;
         let editData = _.pick(req.body, ['name', 'type', 'anticipatedMaxPrice', 'anticipatedMinPrice',
             'sharePrice', 'availableShares', 'openForPurchase', 'closingDate', 'description', 'currency',
-            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount']);
+            'openingDate', 'maturityDate', 'paymentLabel', 'subaccountId', 'subsequentMinAmount',
+            'allocationDate', 'fundingDate']);
 
         const currentDate = new Date().toISOString();
-        const openingDate = moment(editData.openingDate).format();
+        editData.openingDate = new Date(editData.openingDate).toISOString();
         // const maturityDate = moment(editData.maturityDate).format();
-        const closingDate = moment(editData.closingDate).format();
+        editData.closingDate = new Date(editData.closingDate).toISOString();
 
         // check if opening date is greater than current date.
-        if (openingDate >  closingDate) {
+        if (editData.openingDate > editData.closingDate) {
             return next(new AppError('Opening Date should be earlier than Closing Date', 400));
         }
 
-        if (closingDate < currentDate) {
+        if (editData.closingDate < currentDate) {
             return next(new AppError('Closing Date should be greater than Current date', 400));
+        }
+
+        if (editData.allocationDate) {
+            editData.allocationDate = new Date(editData.allocationDate).toISOString();
+        }
+
+        if (editData.fundingDate) {
+            editData.fundingDate = new Date(editData.fundingDate).toISOString();
         }
 
         // if subaccount id was passed
@@ -138,7 +153,6 @@ exports.edit = async (req, res, next) => {
             editData.currency = 'NGN';
         }
 
-        editData.closingDate = new Date(editData.closingDate);
         await Asset.update(editData, {where: {id: assetId}});
 
         let resp = {
@@ -234,45 +248,46 @@ exports.getAll = async (req, res, next) => {
 exports.getOne = async (req, res, next) => {
     try {
         let assetId = req.params.id;
-        let customerId = req.user.id;
+
         let transactions = [];
         if (!assetId) return next(new AppError('assedId required', 400));
         const asset = await Asset.findByPk(assetId);
         if (!asset) return next(new AppError('asset not found', 404));
 
+        const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, status: 'paid'}]}});
 
-        // const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, customerId, status: 'paid'}]}});
-        //
-        // if (!reservations) {
-        //     return next(new AppError('Customer has no transaction', 400));
-        // }
-        //
-        // for (let reservation of reservations) {
-        //     let transaction = await Transaction.find({
-        //         where: {
-        //             [Op.and]:
-        //                 {
-        //                     reservation: reservation.id,
-        //                     customerId,
-        //                     status: 'success'
-        //                 }
-        //         }
-        //     });
-        //
-        //     transactions.push(...transaction);
-        // }
-        //
-        // transactions.sort(function(a,b){
-        //     // Turn your strings into dates, and then subtract them
-        //     // to get a value that is either negative, positive, or zero.
-        //     return new Date(b.date) - new Date(a.date);
-        // });
+        if (!reservations) {
+            return next(new AppError('Customer has no transaction', 400));
+        }
+
+        for (let reservation of reservations) {
+            let transaction = await Transaction.findAll({
+                where: {
+                    [Op.and]:
+                        [{
+                            reservation: reservation.dataValues.id,
+                            status: 'success'
+                        }]
+                }
+            });
+
+            transactions.push(...transaction);
+        }
+
+        transactions.sort(function (a, b) {
+            // Turn your strings into dates, and then subtract them
+            // to get a value that is either negative, positive, or zero.
+            return new Date(b.date) - new Date(a.date);
+        });
 
         let resp = {
             code: 200,
             status: 'success',
             message: 'Asset successfully fetched',
-            data: asset
+            data: {
+                asset,
+                transactions
+            }
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
@@ -388,7 +403,7 @@ exports.get = async (req, res, next) => {
 
         // retrieve multiple assets implementation
         if (page && page >= 0) {
-            page = page -1;
+            page = page - 1;
         } else {
             page = 0;
         }

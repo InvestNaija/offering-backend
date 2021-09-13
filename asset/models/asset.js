@@ -100,6 +100,18 @@ module.exports = (sequelize, Sequelize) => {
         subsequentMinAmount: {
             type: Sequelize.DOUBLE,
             defaultValue: null
+        },
+
+        allocationDate: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
+
+        fundingDate: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            defaultValue: null
         }
     }, {
         paranoid: true,
