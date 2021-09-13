@@ -13,7 +13,7 @@ const sendEmail = require('../../config/email');
 const {Op} = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils')
-const { getPagination, getPagingData } = require('../../config/pagination');
+const {getPagination, getPagingData} = require('../../config/pagination');
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -38,7 +38,7 @@ exports.transactionRequest = async (req, res, next) => {
 }
 
 exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference,
-                                   source, channel, momoAgentId= null, module = null) => {
+                                   source, channel, momoAgentId = null, module = null) => {
     try {
         let transactionReference = help.generateOTCode(20, true);
 
@@ -53,7 +53,7 @@ exports.createTransaction = async (description, amount, type, user, brokerId, re
             channel
         }
 
-        if(momoAgentId) {
+        if (momoAgentId) {
             tx.momoAgentId = momoAgentId;
         }
 
@@ -200,7 +200,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
     }
 }
 
-exports. getAll = async (req, res, next) => {
+exports.getAll = async (req, res, next) => {
     try {
         let {page, size} = req.query;
         let transactions = [];
@@ -527,7 +527,7 @@ exports.decrypt = (req, res, next) => {
     }
 }
 
-exports.fundWalletVNuban = async(req, res, next) => {
+exports.fundWalletVNuban = async (req, res, next) => {
     try {
         let {id} = req.user;
         let {amount} = req.body;
@@ -561,16 +561,16 @@ exports.fundWalletVNuban = async(req, res, next) => {
     }
 }
 
-exports.fundWalletFlutterwave = async(req, res, next) => {
+exports.fundWalletFlutterwave = async (req, res, next) => {
     try {
         let id = req.user.id;
         let {amount} = req.body;
-        if(!amount) return next(new AppError('amount is required', 400));
+        if (!amount) return next(new AppError('amount is required', 400));
         const user = await Customer.findByPk(id);
         let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/wallet/flutterwave/credit/success`;
         let description = 'Wallet Deposit';
         const chargeResponse = await this.initiateChargeCard(user, amount, description, null, callback_url, null);
-        if(chargeResponse.status !== 'success') return next(new AppError('Error initializing transaction', 500));
+        if (chargeResponse.status !== 'success') return next(new AppError('Error initializing transaction', 500));
         let data = {authorization_url: chargeResponse.data.link};
         let resp = {
             code: 200,
@@ -585,7 +585,7 @@ exports.fundWalletFlutterwave = async(req, res, next) => {
     }
 }
 
-exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
+exports.walletFundingFlutterwaveWebhook = async (req, res, next) => {
     try {
         let resp = {
             code: 200,
@@ -599,8 +599,11 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
         const verified = await flutterwave.verifyTransaction(transaction_id);
         let transactionReference = verified.tx_ref;
         const user = await Customer.findOne({where: {email: verified.customer.email}});
-        if(!user) console.log('Error: User not found...');
-        const [rows, [transaction]] = await Transaction.update({status: 'success', gatewayReference: transaction_id}, {returning: true, where: {reference: tx_ref}});
+        if (!user) console.log('Error: User not found...');
+        const [rows, [transaction]] = await Transaction.update({
+            status: 'success',
+            gatewayReference: transaction_id
+        }, {returning: true, where: {reference: tx_ref}});
         const wallet = await Wallet.findOne({where: {customerId: user.id}});
         let balance = parseFloat(wallet.balance);
         let newBalance = balance + parseFloat(verified.amount);
@@ -635,7 +638,7 @@ exports.walletFundingFlutterwaveWebhook = async(req, res, next) => {
     }
 }
 
-exports.walletFundingVNubanWebhook = async(req, res, next) => {
+exports.walletFundingVNubanWebhook = async (req, res, next) => {
     try {
         res.send(200);
         let data = req.body.data;
