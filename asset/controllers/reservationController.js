@@ -257,7 +257,7 @@ exports.payForReservation = async (req, res, next) => {
     try {
         let customerId;
         let brokerId;
-        let {gateway, currency, reinvest, redirectURL} = req.body;
+        let {gateway, currency, reinvest, redirectUrl} = req.body;
         let response = {};
 
         if (!gateway) return next(new AppError('gateway required', 400));
@@ -294,7 +294,13 @@ exports.payForReservation = async (req, res, next) => {
         let amount = reservation.amount;
         let description = 'Shares Purchase';
         if (gateway === 'flutterwave') {
-            let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/shares/credit/success?redirectUrl=${redirectURL}`;
+            let callback_url;
+
+            if (redirectUrl) {
+                callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/shares/credit/success?redirectUrl=${redirectUrl}`;
+            } else {
+                callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/shares/credit/success`;
+            }
 
             // check if it's dollar payment and process with dollar method
             if (reservation.asset.currency === 'USD') {
