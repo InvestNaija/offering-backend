@@ -254,40 +254,37 @@ exports.getOne = async (req, res, next) => {
         const asset = await Asset.findByPk(assetId);
         if (!asset) return next(new AppError('asset not found', 404));
 
-        const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, status: 'paid'}]}});
+        // const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, status: 'paid'}]}});
+        //
+        // if (!reservations) {
+        //     return next(new AppError('Customer has no transaction', 400));
+        // }
 
-        if (!reservations) {
-            return next(new AppError('Customer has no transaction', 400));
-        }
-
-        for (let reservation of reservations) {
-            let transaction = await Transaction.findAll({
-                where: {
-                    [Op.and]:
-                        [{
-                            reservation: reservation.dataValues.id,
-                            status: 'success'
-                        }]
-                }
-            });
-
-            transactions.push(...transaction);
-        }
-
-        transactions.sort(function (a, b) {
-            // Turn your strings into dates, and then subtract them
-            // to get a value that is either negative, positive, or zero.
-            return new Date(b.date) - new Date(a.date);
-        });
+        // for (let reservation of reservations) {
+        //     let transaction = await Transaction.findAll({
+        //         where: {
+        //             [Op.and]:
+        //                 [{
+        //                     reservation: reservation.dataValues.id,
+        //                     status: 'success'
+        //                 }]
+        //         }
+        //     });
+        //
+        //     transactions.push(...transaction);
+        // }
+        //
+        // transactions.sort(function (a, b) {
+        //     // Turn your strings into dates, and then subtract them
+        //     // to get a value that is either negative, positive, or zero.
+        //     return new Date(b.date) - new Date(a.date);
+        // });
 
         let resp = {
             code: 200,
             status: 'success',
             message: 'Asset successfully fetched',
-            data: {
-                asset,
-                transactions
-            }
+            data: asset
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
