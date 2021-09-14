@@ -28,6 +28,7 @@ const EmailValidator = require('email-validator');
 const BvnData = db.bvnData;
 const Reservation = db.reservations;
 const Transaction = db.transactions;
+const Asset = db.assets;
 
 
 exports.signup = async (req, res, next) => {
@@ -1435,6 +1436,7 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
 
         const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, customerId, status: 'paid'}]}});
 
+        const asset = await Asset.findByPk(assetId);
         if (!reservations) {
             return next(new AppError('Customer has no transaction', 400));
         }
@@ -1464,7 +1466,10 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
             code: 200,
             status: 'success',
             message: 'Transaction returned successfully',
-            data: transactions[0]
+            data: {
+                asset,
+                transaction: transactions[0]
+            }
         }
 
         res.status(resp.code).json(resp);
