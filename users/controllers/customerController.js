@@ -34,6 +34,7 @@ const Asset = db.assets;
 exports.signup = async (req, res, next) => {
     try {
         let brokerId;
+        let url;
         let broker;
         if (req.user) {
             brokerId = req.user.id;
@@ -102,7 +103,14 @@ exports.signup = async (req, res, next) => {
 
         let otp = helper.generateOTCode(6, false);
         const token = await Token.create({token: otp, customerId: customer.id});
-        let url = `${process.env.FRONTEND_URL}/auth/verify-otp`
+
+        // check if base url is defined
+        if (post.baseUrl) {
+            url = `${post.baseUrl}/auth/verify-otp`;
+        } else {
+            url = `${process.env.FRONTEND_URL}/auth/verify-otp`
+        }
+
         // ***** notification with otp sent to customer
         let opts = {
             email: customer.email,
