@@ -1480,5 +1480,3 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
         return next(err);
     }
 }
-
-
