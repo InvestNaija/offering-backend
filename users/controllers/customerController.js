@@ -216,7 +216,7 @@ exports.forgotPasswordCustomer = async (req, res, next) => {
             return next();
         }).catch(err => {
             console.log('error sending password reset', err);
-            return next(new AppError('Error sending password reset email. Please try again.', 500));
+            return next(new AppError(`Error sending password reset email: ${err}. Please try again.`, 500));
         })
     } catch (error) {
         return next(error);
