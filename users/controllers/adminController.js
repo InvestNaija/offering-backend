@@ -34,16 +34,27 @@ exports.signup = async(req, res, next) => {
 exports.login = async(req, res, next) => {
     try {
         let {email, password} = req.body;
+        let roles = [];
         if(!email || !password) return next(new AppError('email and password required', 400));
         const user = await Admin.findOne({where: {email}});
+        const adminRole = await Admin_Roles.findAll({where: {adminId: user.id}});
+
+        for (const item of adminRole) {
+            const roleValue = await Role.findByPk(item.roleId);
+            roles.push({module: roleValue.module, permission: roleValue.permission});
+        }
+
         if(!user) return next(new AppError('User not found', 404));
         const correctPassword = bcrypt.compareSync(password, user.password);
         if(!correctPassword) return next(new AppError('Wrong password entered', 406));
         let signature = {
             id: user.id,
-            role: user.role
+            role: user.role,
+            roles: roles
         }
+
         const token = auth.createAccessToken(signature);
+
         let resp = {
             code: 200,
             status: 'success',
