@@ -115,9 +115,16 @@ exports.edit = async (req, res, next) => {
             'allocationDate', 'fundingDate']);
 
         const currentDate = new Date().toISOString();
-        editData.openingDate = new Date(editData.openingDate).toISOString();
-        // const maturityDate = moment(editData.maturityDate).format();
-        editData.closingDate = new Date(editData.closingDate).toISOString();
+
+        if (editData.openingDate) {
+            editData.openingDate = new Date(editData.openingDate).toISOString();
+        }
+
+        if (editData.closingDate) {
+            editData.closingDate = new Date(editData.closingDate).toISOString();
+        }
+         // const maturityDate = moment(editData.maturityDate).format();
+
 
         // check if opening date is greater than current date.
         if (editData.openingDate > editData.closingDate) {
@@ -144,8 +151,8 @@ exports.edit = async (req, res, next) => {
         }
 
         // check if subsequentMinAmount is defined
-        if (!data.subsequentMinAmount) {
-            data.subsequentMinAmount = 0;
+        if (!editData.subsequentMinAmount) {
+            editData.subsequentMinAmount = 0;
         }
 
         // check if currency is passed
