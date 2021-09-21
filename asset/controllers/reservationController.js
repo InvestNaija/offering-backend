@@ -139,20 +139,26 @@ exports.reserveAsset = async (user, asset, amount, units, brokerId, paid = false
 exports.editReservation = async (req, res, next) => {
     try {
         let reservationId = req.params.id;
-        let {units} = req.body;
+        let {units, amount} = req.body;
         if (!units) return next(new AppError('units required.', 400));
         const reservation = await Reservation.findOne({where: {id: reservationId}});
         if (!reservation) return next(new AppError('reservation not found.', 404));
-        if (reservation.status !== 'pending' || reservation.paid) return next(new AppError('invalid reservation.', 403));
+        if (reservation.status !== 'pending' || reservation.paid) return next(new AppError('Reservation is not pending or has been paid.', 403));
         let asset = await Asset.findByPk(reservation.assetId);
         if (!asset) return next(new AppError('Asset unavailable', 404));
-        let amount = units * asset.sharePrice;
+
+        if (!amount || amount === "" || isNaN(amount)) {
+            amount = units * asset.sharePrice;
+        }
+        
         await Reservation.update({unitsExpressed: units, amount}, {where: {id: reservation.id}});
+
         let resp = {
             code: 200,
             status: 'success',
-            message: "Reservation Updated"
+            message: "Reservation Updated Successfully"
         }
+        
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
         return next();
