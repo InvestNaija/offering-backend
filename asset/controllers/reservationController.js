@@ -140,7 +140,7 @@ exports.editReservation = async (req, res, next) => {
     try {
         let reservationId = req.params.id;
         let {units, amount} = req.body;
-        if (!units) return next(new AppError('units required.', 400));
+        if (units == null) return next(new AppError('Units required.', 400));
         const reservation = await Reservation.findOne({where: {id: reservationId}});
         if (!reservation) return next(new AppError('reservation not found.', 404));
         if (reservation.status !== 'pending' || reservation.paid) return next(new AppError('Reservation is not pending or has been paid.', 403));
