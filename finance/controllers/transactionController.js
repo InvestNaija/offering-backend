@@ -847,3 +847,56 @@ exports.downloadCustomerTransactions = async (req, res, next) => {
         return next(error);
     }
 }
+
+exports.downloadTransactionsPerAsset = async (req, res, next) => {
+    try {
+        const assetId = req.params.id;
+        let transactions = [];
+        const filename = "transactions.csv";
+
+        let reservations = await Reservation.findAll({
+            where: {
+                assetId
+            }
+        });
+
+        if (!reservations) {
+            return next(new AppError('Asset has no transactions', 400));
+        }
+
+        for (const reservation of reservations) {
+            let transaction = await Transaction.findAll({
+                where: {
+                    reservation: reservation.id
+                },
+                order: ['customerId'],
+                include: ['customer'],
+            })
+
+            for (const item of transaction) {
+                delete item.dataValues.customerId;
+
+                item.dataValues.customer = `${item.dataValues?.customer?.dataValues?.firstName} ${item.dataValues?.customer?.dataValues?.middleName} ${item.dataValues?.customer?.dataValues?.lastName}`;
+                transactions.push(item.dataValues);
+            }
+        }
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Transactions retrieved successfully',
+            data: transactions
+        }
+
+        // attempt to return downloadable file
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment;filename=${filename}`);
+        res.csv(transactions, true);
+
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Download Transaction: ', error);
+        return next(error);
+    }
+}
