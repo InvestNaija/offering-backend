@@ -37,6 +37,6 @@ router.route('/:id')
 
 router.get('/customer/:id', auth.adminAuth, transaction.getCustomerTransaction)
 
-router.get('/asset/:assetId/transactions/customer/:customerId', auth.adminAuth, transaction.downloadCustomerTransactions)
+router.get('/asset/:assetId/transactions/customer/:customerId', transaction.downloadCustomerTransactions)
 
 module.exports = router;
