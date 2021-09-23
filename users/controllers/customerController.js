@@ -22,13 +22,14 @@ const verifyme = require('../../config/verifyme');
 const accessgateway = require('../../config/accessgateway');
 const KycDocuments = db.kycDocuments;
 const path = require('path');
-const {Op} = require('sequelize');
-const {getPagination, getPagingData} = require("../../config/pagination");
+const { Op } = require('sequelize');
+const { getPagination, getPagingData } = require("../../config/pagination");
 const EmailValidator = require('email-validator');
 const BvnData = db.bvnData;
 const Reservation = db.reservations;
 const Transaction = db.transactions;
 const Asset = db.assets;
+const csv = require('csv-express');
 
 
 exports.signup = async (req, res, next) => {
@@ -68,11 +69,11 @@ exports.signup = async (req, res, next) => {
         post.email = post.email.toLowerCase();
         console.log(post);
         let password = bcrypt.hashSync(post.password, 12);
-        const emailExists = await Customer.findOne({where: {email: post.email}});
+        const emailExists = await Customer.findOne({ where: { email: post.email } });
         if (emailExists) return next(new AppError('A user is already signed up with this email', 409));
         // const bvnExists = await Customer.findOne({where: {bvn: post.bvn}});
-        const ninExists = await Customer.findOne({where: {nin: post.nin}});
-        const bvnExists = await Customer.findOne({where: {bvn: post.bvn}});
+        const ninExists = await Customer.findOne({ where: { nin: post.nin } });
+        const bvnExists = await Customer.findOne({ where: { bvn: post.bvn } });
         if (bvnExists) return next(new AppError('A user is already signed up with this BVN', 409));
         if (ninExists) return next(new AppError('A user is already signed up with this NIN', 409));
         post.password = password;
@@ -102,7 +103,7 @@ exports.signup = async (req, res, next) => {
         res.locals.resp = resp;
 
         let otp = helper.generateOTCode(6, false);
-        const token = await Token.create({token: otp, customerId: customer.id});
+        const token = await Token.create({ token: otp, customerId: customer.id });
 
         // check if base url is defined
         if (post.baseUrl) {
@@ -138,16 +139,16 @@ exports.signup = async (req, res, next) => {
 
 exports.resendOTP = async (req, res, next) => {
     try {
-        let {email} = req.body;
+        let { email } = req.body;
         if (!email) return next(new AppError('Email is required', 400));
-        const customer = await Customer.findOne({where: {email}});
+        const customer = await Customer.findOne({ where: { email } });
         if (!customer) return next(new AppError('User not found. Please signup to continue', 404));
         let otp;
-        let tokenExists = await Token.findOne({where: {used: false, customerId: customer.id}});
+        let tokenExists = await Token.findOne({ where: { used: false, customerId: customer.id } });
         if (tokenExists) otp = tokenExists.token;
         else {
             otp = helper.generateOTCode(6, false);
-            const token = await Token.create({token: otp, customerId: customer.id});
+            const token = await Token.create({ token: otp, customerId: customer.id });
         }
         let opts = {
             email: customer.email,
@@ -182,12 +183,12 @@ exports.resendOTP = async (req, res, next) => {
 
 exports.forgotPasswordCustomer = async (req, res, next) => {
     try {
-        let {email, baseUrl} = req.body;
+        let { email, baseUrl } = req.body;
         let url = "";
-        const user = await Customer.findOne({where: {email}});
+        const user = await Customer.findOne({ where: { email } });
         if (!user) return next(new AppError('user not found.', 404));
         let str = crypto.randomBytes(16).toString("hex");
-        const token = await Token.create({token: str, customerId: user.id});
+        const token = await Token.create({ token: str, customerId: user.id });
         if (!token) return next(new AppError('error creating password reset', 500));
 
         if (baseUrl) {
@@ -227,15 +228,15 @@ exports.resetPasswordCustomer = async (req, res, next) => {
     try {
         let token = req.params.token;
         if (!token) return next(new AppError('token is required', 400));
-        let {password, confirmPassword} = req.body;
+        let { password, confirmPassword } = req.body;
         if (!password || !confirmPassword) return next(new AppError('password and confirmPassword is required', 400));
         if (password !== confirmPassword) return next(new AppError('password and confirmPassword do not match', 400));
-        const tokenExists = await Token.findOne({where: {token}});
+        const tokenExists = await Token.findOne({ where: { token } });
         if (!tokenExists || tokenExists.used) return next(new AppError('invalid or expired token', 401));
         let customerId = tokenExists.customerId;
         if (!customerId) return next(new AppError('invalid customer', 401));
         let hash = bcrypt.hashSync(password, 12);
-        await Customer.update({password: hash}, {where: {id: customerId}});
+        await Customer.update({ password: hash }, { where: { id: customerId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -251,9 +252,9 @@ exports.resetPasswordCustomer = async (req, res, next) => {
 
 exports.verifyCustomer = async (req, res, next) => {
     try {
-        let {email, otp} = req.body;
+        let { email, otp } = req.body;
         if (!email || !otp) return next(new AppError('User email and otp is required', 400));
-        let token = await Token.findOne({where: {token: otp, used: false}, include: 'customer'});
+        let token = await Token.findOne({ where: { token: otp, used: false }, include: 'customer' });
         if (!token) return next(new AppError('Invalid OTP', 404));
         token = JSON.stringify(token, null, 2);
         token = JSON.parse(token);
@@ -261,9 +262,9 @@ exports.verifyCustomer = async (req, res, next) => {
         if (token.customer.email !== email) return next(new AppError('Invalid token/user pair', 403));
         if (token.customer.verified) return next(new AppError('User has already been verified', 409));
 
-        await Token.update({used: true}, {where: {id: token.id}});
-        await Customer.update({verified: true, status: 'active'}, {where: {id: token.customer.id}});
-        const wallet = await Wallet.create({customerId: token.customer.id});
+        await Token.update({ used: true }, { where: { id: token.id } });
+        await Customer.update({ verified: true, status: 'active' }, { where: { id: token.customer.id } });
+        const wallet = await Wallet.create({ customerId: token.customer.id });
         let resp = {
             code: 200,
             status: 'success',
@@ -284,10 +285,10 @@ exports.verifyCustomer = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        let {email, password} = req.body;
+        let { email, password } = req.body;
         if (!email || !password) return next(new AppError('User\'s email and password required', 400));
         email = email.toLowerCase();
-        const user = await Customer.findOne({where: {email}});
+        const user = await Customer.findOne({ where: { email } });
         if (!user) return next(new AppError('Invalid email.', 404));
         if (!user.verified) return next(new AppError('Please verify your account to proceed.', 411));
         let correctPassword = bcrypt.compareSync(password, user.password);
@@ -315,13 +316,13 @@ exports.login = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
     try {
         let id = req.user.id
-        let {oldPassword, newPassword} = req.body;
+        let { oldPassword, newPassword } = req.body;
         if (!oldPassword || !newPassword) return next(new AppError('New and old passwords required', 406));
         const customer = await Customer.findByPk(id);
         const correctPassword = bcrypt.compareSync(oldPassword, customer.password);
         if (!correctPassword) return next(new AppError('Incorrect old password entered', 401));
         let hash = bcrypt.hashSync(newPassword, 12);
-        await Customer.update({password: hash}, {where: {id}});
+        await Customer.update({ password: hash }, { where: { id } });
         let resp = {
             code: 200,
             status: 'success',
@@ -343,7 +344,7 @@ exports.edit = async (req, res, next) => {
         let data = _.pick(req.body, request);
         data.mothersMaidenName = req.body.motherMaidenName;
 
-        await Customer.update(data, {where: {id: customerId}});
+        await Customer.update(data, { where: { id: customerId } });
 
         let customer = await Customer.findByPk(customerId);
 
@@ -381,7 +382,7 @@ exports.updateBankAccount = async (req, res, next) => {
         request.map(i => {
             if (!req.body[i]) return next(new AppError(i + ' required.', 400));
         })
-        let {password} = req.body;
+        let { password } = req.body;
         if (!password) return next(new AppError('password required', 400));
         const customer = await Customer.findByPk(id);
         if (!customer) return next(new AppError('customer invalid.', 404));
@@ -389,7 +390,7 @@ exports.updateBankAccount = async (req, res, next) => {
         if (!passwordCorrect) return next(new AppError('incorrect password.', 401));
         let data = _.pick(req.body, request);
         data.accountDetailsVerified = true;
-        await Customer.update(data, {where: {id}})
+        await Customer.update(data, { where: { id } })
         let resp = {
             code: 200,
             status: 'success',
@@ -407,10 +408,10 @@ exports.updateBankAccount = async (req, res, next) => {
 exports.editAvatar = async (req, res, next) => {
     try {
         let id = req.user.id;
-        let {image} = req.body;
+        let { image } = req.body;
         if (!image) return next(new AppError('Image required.', 400));
         let result = await cloudinary.uploadImage(image)
-        if (result.secure_url) await Customer.update({image: result.secure_url}, {where: {id}});
+        if (result.secure_url) await Customer.update({ image: result.secure_url }, { where: { id } });
         else return next(new AppError('Error uploading image.', 500));
         let resp = {
             code: 200,
@@ -428,7 +429,7 @@ exports.editAvatar = async (req, res, next) => {
 exports.uploadKYC = async (req, res, next) => {
     try {
         let id = req.user.id;
-        const form = new formidable({multiples: true});
+        const form = new formidable({ multiples: true });
         let files = {};
         let fields = {};
         form.on('file', (name, file) => {
@@ -451,7 +452,7 @@ exports.uploadKYC = async (req, res, next) => {
                     if (validfields.indexOf(key) > -1) {
                         let update = {};
                         update[key] = fields[key]
-                        await Customer.update(update, {where: {id}});
+                        await Customer.update(update, { where: { id } });
                         // console.log(update);
                     }
                 }
@@ -463,7 +464,7 @@ exports.uploadKYC = async (req, res, next) => {
                         if (result.secure_url) {
                             let update = {};
                             update[key] = result.secure_url;
-                            await Customer.update(update, {where: {id}});
+                            await Customer.update(update, { where: { id } });
                             // console.log(update);
                         }
                     }
@@ -510,7 +511,7 @@ exports.fetchDocuments = async (req, res, next) => {
 
 exports.get = async (req, res, next) => {
     try {
-        let {page, size, search} = req.query;
+        let { page, size, search } = req.query;
         let customers = [];
 
         if (page && page >= 0) {
@@ -519,7 +520,7 @@ exports.get = async (req, res, next) => {
             page = 0;
         }
 
-        const {limit, offset} = getPagination(page, size);
+        const { limit, offset } = getPagination(page, size);
 
         let query = {
             limit,
@@ -533,9 +534,9 @@ exports.get = async (req, res, next) => {
         if (search) {
             let item = {
                 [Op.or]: [
-                    {firstName: {[Op.iLike]: `%${search}%`}},
-                    {lastName: {[Op.iLike]: `%${search}%`}},
-                    {middleName: {[Op.iLike]: `%${search}%`}}
+                    { firstName: { [Op.iLike]: `%${search}%` } },
+                    { lastName: { [Op.iLike]: `%${search}%` } },
+                    { middleName: { [Op.iLike]: `%${search}%` } }
                 ]
             };
 
@@ -544,7 +545,7 @@ exports.get = async (req, res, next) => {
 
         customers = await Customer.findAndCountAll(query);
 
-        let {data, totalItems, totalPages, currentPage} = getPagingData(customers, page, limit);
+        let { data, totalItems, totalPages, currentPage } = getPagingData(customers, page, limit);
 
         let resp = {
             code: 200,
@@ -602,7 +603,7 @@ exports.count = async (req, res, next) => {
 exports.getBrokerCustomers = async (req, res, next) => {
     try {
         let brokerId = req.user.id;
-        const customers = await Customer.findAll({where: {brokerId}});
+        const customers = await Customer.findAll({ where: { brokerId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -620,7 +621,7 @@ exports.getBrokerCustomers = async (req, res, next) => {
 exports.brokerCustomersCount = async (req, res, next) => {
     try {
         let brokerId = req.user.id;
-        const count = await Customer.count({where: {brokerId}});
+        const count = await Customer.count({ where: { brokerId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -646,9 +647,9 @@ exports.createCSCSAccount = async (req, res, next) => {
             customer = await Customer.findByPk(customerId);
             // customerBvnData = await BvnData.findOne({where: {bvn: customer.bvn}});
         } else {
-            let {bvn} = req.body;
+            let { bvn } = req.body;
             if (!bvn) return next(new AppError('customer BVN is required', 400));
-            customer = await Customer.findOne({where: {bvn}});
+            customer = await Customer.findOne({ where: { bvn } });
             if (!customer) return next(new AppError('No customer found with entered bvn.', 404));
             customerId = customer.id;
         }
@@ -688,16 +689,16 @@ exports.createCSCSAccount = async (req, res, next) => {
         // console.log(response)
         if (!response) return next(new AppError("cscs server error", 512));
         let logData = JSON.stringify(data);
-        const cscslog = await CscsLog.create({request: logData, customerId});
+        const cscslog = await CscsLog.create({ request: logData, customerId });
 
         if (response.response_code != 200) {
             await Customer.update({
                 cscsRef: data.RefNo,
                 cscsRequestStatus: 'request-failure',
                 cscsRequestFailureReason: response.response_message
-            }, {where: {id: customerId}});
+            }, { where: { id: customerId } });
             let responseData = JSON.stringify(response);
-            await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
+            await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
             let resp = {
                 code: 200,
                 status: 'success',
@@ -708,8 +709,8 @@ exports.createCSCSAccount = async (req, res, next) => {
             return next();
         } else {
             let responseData = JSON.stringify(response);
-            await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
-            await Customer.update({cscsRef: data.RefNo, cscsRequestStatus: 'requested'}, {where: {id: customerId}});
+            await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
+            await Customer.update({ cscsRef: data.RefNo, cscsRequestStatus: 'requested' }, { where: { id: customerId } });
 
             let resp = {
                 code: 200,
@@ -740,7 +741,7 @@ exports.createCSCSAccount = async (req, res, next) => {
 exports.signupViaMTN = async (req, res, next) => {
     try {
         let data = {};
-        let {nin, bvn, cscsExist, firstName, lastName, email} = req.body;
+        let { nin, bvn, cscsExist, firstName, lastName, email } = req.body;
         if (!bvn) return next(new AppError('bvn required', 400));
         if (!firstName || !lastName) return next(new AppError('firstName and lastName required', 400));
         if (!nin) return next(new AppError('nin required', 400));
@@ -751,10 +752,10 @@ exports.signupViaMTN = async (req, res, next) => {
             if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
             data[item] = req.body[item]
         })
-        const bvnExists = await Customer.findOne({where: {bvn}});
-        const userExists = await Customer.findOne({where: {email}});
+        const bvnExists = await Customer.findOne({ where: { bvn } });
+        const userExists = await Customer.findOne({ where: { email } });
         if (userExists) return next(new AppError('user already signed up with this email', 400))
-        const ninExists = await Customer.findOne({where: {nin}});
+        const ninExists = await Customer.findOne({ where: { nin } });
         if (ninExists) return next(new AppError('A user is already signed up with this nin', 409));
         if (bvnExists) return next(new AppError('A user is already signed up with this bvn', 409));
 
@@ -820,29 +821,29 @@ exports.signupViaMTN = async (req, res, next) => {
             console.log(cscsResponse)
             if (!cscsResponse) return next(new AppError('error creating your cscs account', 512));
             let logData = JSON.stringify(data);
-            const cscslog = await CscsLog.create({request: logData, customerId: customer.id});
+            const cscslog = await CscsLog.create({ request: logData, customerId: customer.id });
             if (cscsResponse.response_code !== 200) {
                 await Customer.update({
                     cscsRef: cscsData.RefNo,
                     cscsRequestStatus: 'request-failure',
                     cscsRequestFailureReason: cscsResponse.response_message
-                }, {where: {id: customer.id}});
+                }, { where: { id: customer.id } });
                 let responseData = JSON.stringify(cscsResponse);
-                await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
+                await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
                 // return next(new AppError(`Error creating CSCS account: ${response.response_message}.`, 400));
                 console.log('CSCS creation response: ', cscsResponse.response_message);
             }
             let responseData = JSON.stringify(cscsResponse);
-            await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
+            await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
             await Customer.update({
                 cscsRef: cscsData.RefNo,
                 cscsRequestStatus: 'requested'
-            }, {where: {id: customer.id}});
+            }, { where: { id: customer.id } });
             console.log('CSCS request success');
         } else {
-            let {cscsNo} = req.body;
+            let { cscsNo } = req.body;
             if (!cscsNo) return next(new AppError('cscsNo is required.', 400));
-            const cscsExists = await Customer.findOne({where: {cscs: cscsNo}});
+            const cscsExists = await Customer.findOne({ where: { cscs: cscsNo } });
             if (cscsExists) return next(new AppError('A user is already signed up with this cscs', 409));
             const cscsResponse = await cscs.verifyCSCS(cscsNo);
             if (!cscsResponse) return next(new AppError('Error occured while verifying your CSCS number', 512));
@@ -882,7 +883,7 @@ exports.signupViaMTN = async (req, res, next) => {
 exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
     try {
         let data = {};
-        let {nin, bvn, cscsExist, email, dob, motherMaidenName, placeOfBirth} = req.body;
+        let { nin, bvn, cscsExist, email, dob, motherMaidenName, placeOfBirth } = req.body;
 
         if (!EmailValidator.validate(email)) {
             return next(new AppError('Email is not valid', 400));
@@ -910,10 +911,10 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
             return next(new AppError('date of birth (dob) is required and should be in the format DD-MM-YYYY', 400));
         }
 
-        const bvnExists = await Customer.findOne({where: {bvn}});
-        const userExists = await Customer.findOne({where: {email}});
+        const bvnExists = await Customer.findOne({ where: { bvn } });
+        const userExists = await Customer.findOne({ where: { email } });
         if (userExists) return next(new AppError('user already signed up with this email', 400))
-        const ninExists = await Customer.findOne({where: {nin}});
+        const ninExists = await Customer.findOne({ where: { nin } });
         if (ninExists) return next(new AppError('A user is already signed up with this nin', 409));
         if (bvnExists) return next(new AppError('A user is already signed up with this bvn', 409));
 
@@ -1022,29 +1023,29 @@ exports.signupViaMTNWithoutVerifications = async (req, res, next) => {
             console.log(cscsResponse)
             if (!cscsResponse) return next(new AppError('error creating your cscs account', 512));
             let logData = JSON.stringify(data);
-            const cscslog = await CscsLog.create({request: logData, customerId: customer.id});
+            const cscslog = await CscsLog.create({ request: logData, customerId: customer.id });
             if (cscsResponse.response_code !== 200) {
                 await Customer.update({
                     cscsRef: cscsData.RefNo,
                     cscsRequestStatus: 'request-failure',
                     cscsRequestFailureReason: cscsResponse.response_message
-                }, {where: {id: customer.id}});
+                }, { where: { id: customer.id } });
                 let responseData = JSON.stringify(cscsResponse);
-                await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
+                await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
                 // return next(new AppError(`Error creating CSCS account: ${response.response_message}.`, 400));
                 console.log('CSCS creation response: ', cscsResponse.response_message);
             }
             let responseData = JSON.stringify(cscsResponse);
-            await CscsLog.update({response: responseData}, {where: {id: cscslog.id}});
+            await CscsLog.update({ response: responseData }, { where: { id: cscslog.id } });
             await Customer.update({
                 cscsRef: cscsData.RefNo,
                 cscsRequestStatus: 'requested'
-            }, {where: {id: customer.id}});
+            }, { where: { id: customer.id } });
             console.log('CSCS request success');
         } else {
-            let {cscsNo} = req.body;
+            let { cscsNo } = req.body;
             if (!cscsNo) return next(new AppError('cscsNo is required.', 400));
-            const cscsExists = await Customer.findOne({where: {cscs: cscsNo}});
+            const cscsExists = await Customer.findOne({ where: { cscs: cscsNo } });
             if (cscsExists) return next(new AppError('A user is already signed up with this cscs', 409));
 
             // cscs verification
@@ -1095,7 +1096,7 @@ exports.newUploadKycDocuments = async (req, res, next) => {
             userId = req.params.id;
         }
 
-        const form = new formidable({multiples: true});
+        const form = new formidable({ multiples: true });
         let files = {};
         let fields = {};
 
@@ -1128,7 +1129,7 @@ exports.newUploadKycDocuments = async (req, res, next) => {
 
                 // check if customer already exists in the data
                 let customers = await KycDocuments.findAll({
-                    where: {customerId: userId}
+                    where: { customerId: userId }
                 });
 
                 for (let field in fields) {
@@ -1141,9 +1142,9 @@ exports.newUploadKycDocuments = async (req, res, next) => {
 
                     if (item.length > 0) {
                         for (let val of item) {
-                            await KycDocuments.update({name: document.name, value: document.value}, {
+                            await KycDocuments.update({ name: document.name, value: document.value }, {
                                 where: {
-                                    [Op.and]: [{customerId: userId}, {name: val.name}]
+                                    [Op.and]: [{ customerId: userId }, { name: val.name }]
                                 }
                             });
                         }
@@ -1174,9 +1175,9 @@ exports.newUploadKycDocuments = async (req, res, next) => {
 
                         if (item.length > 0) {
                             for (let val of item) {
-                                await KycDocuments.update({name: document.name, value: document.value}, {
+                                await KycDocuments.update({ name: document.name, value: document.value }, {
                                     where: {
-                                        [Op.and]: [{customerId: userId}, {name: val.name}]
+                                        [Op.and]: [{ customerId: userId }, { name: val.name }]
                                     }
                                 });
                             }
@@ -1199,7 +1200,7 @@ exports.newUploadKycDocuments = async (req, res, next) => {
 exports.createNextOfKin = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        let {name, relationship, address, phoneNumber, email} = req.body;
+        let { name, relationship, address, phoneNumber, email } = req.body;
 
         // check if user supplied the requested items
         let request = ['name', 'relationship', 'address', 'phoneNumber', 'email'];
@@ -1215,7 +1216,7 @@ exports.createNextOfKin = async (req, res, next) => {
             nextOfKinEmail: email
         };
 
-        await Customer.update(customer, {where: {id: userId}});
+        await Customer.update(customer, { where: { id: userId } });
 
         let resp = {
             code: 201,
@@ -1236,7 +1237,7 @@ exports.createNextOfKin = async (req, res, next) => {
 exports.editNextOfKin = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        let {name, relationship, address, phoneNumber, email} = req.body;
+        let { name, relationship, address, phoneNumber, email } = req.body;
 
         // check if user supplied the requested items
         let userRequest = Object.keys(req);
@@ -1255,7 +1256,7 @@ exports.editNextOfKin = async (req, res, next) => {
             nextOfKinEmail: email
         };
 
-        await Customer.update(customer, {where: {id: userId}});
+        await Customer.update(customer, { where: { id: userId } });
 
         let resp = {
             code: 204,
@@ -1286,7 +1287,7 @@ exports.getUploadedKycDocuments = async (req, res, next) => {
 
 
         let documents = await KycDocuments.findAll({
-            where: {customerId: userId},
+            where: { customerId: userId },
             attributes: ['name', 'value']
         });
 
@@ -1308,7 +1309,7 @@ exports.getUploadedKycDocuments = async (req, res, next) => {
 
 exports.miniSignup = async (req, res, next) => {
     try {
-        let {firstname, lastname, phonenumber, email, password} = req.body;
+        let { firstname, lastname, phonenumber, email, password } = req.body;
 
         // check if user supplied the requested items
         let request = ['firstname', 'lastname', 'email', 'password'];
@@ -1319,7 +1320,7 @@ exports.miniSignup = async (req, res, next) => {
         let hashedPassword = bcrypt.hashSync(password, 12);
         let defaultDob = moment("01-01-1700").format("YYYY-MM-DD");
 
-        let emailExists = await Customer.findOne({where: {email: email}});
+        let emailExists = await Customer.findOne({ where: { email: email } });
 
         if (emailExists) {
             return next(new AppError('Email already exists for another customer.', 400));
@@ -1356,7 +1357,7 @@ exports.miniSignup = async (req, res, next) => {
 
 exports.firstStepVerification = async (req, res, next) => {
     try {
-        let {bvn, cscsNo, dob} = req.body;
+        let { bvn, cscsNo, dob } = req.body;
         let bvnResponse = "";
         let cscsResponse = "";
         let bvnData = {};
@@ -1442,7 +1443,7 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
         let customerId = req.user.id;
         let transactions = [];
 
-        const reservations = await Reservation.findAll({where: {[Op.and]: [{assetId, customerId, status: 'paid'}]}});
+        const reservations = await Reservation.findAll({ where: { [Op.and]: [{ assetId, customerId, status: 'paid' }] } });
 
         const asset = await Asset.findByPk(assetId);
         if (!reservations) {
@@ -1453,18 +1454,18 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
             let transaction = await Transaction.find({
                 where: {
                     [Op.and]:
-                        {
-                            reservation: reservation.id,
-                            customerId,
-                            status: 'success'
-                        }
+                    {
+                        reservation: reservation.id,
+                        customerId,
+                        status: 'success'
+                    }
                 }
             });
 
             transactions.push(...transaction);
         }
 
-        transactions.sort(function(a,b){
+        transactions.sort(function (a, b) {
             // Turn your strings into dates, and then subtract them
             // to get a value that is either negative, positive, or zero.
             return new Date(b.date) - new Date(a.date);
@@ -1486,5 +1487,33 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
     } catch (err) {
         console.error('Get First Transaction For Asset Error: ', err);
         return next(err);
+    }
+}
+
+exports.downloadPendingCSCSRegistration = async (req, res, next) => {
+    try {
+        const customers = [];
+        const filename = "customers.csv";
+
+        customers = await Customer.findAll({where: {cscsVerified: false}});
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Pending CSCS Verifications retrieved successfully',
+            data: customers
+        }
+
+        res.status(resp.code).json(resp)
+
+        res.setHeader('Content-Type', 'text/csv')
+        res.setHeader('Content-Disposition', `attachment;filename=${filename}`)
+        res.csv(customers, true)
+
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Download Pending CSCS Registration Error: ', error);
+        return next(error);
     }
 }

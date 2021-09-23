@@ -14,6 +14,7 @@ const {Op} = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils')
 const {getPagination, getPagingData} = require('../../config/pagination');
+const csv = require('csv-express');
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -779,5 +780,71 @@ exports.getCustomerTransaction = async (req, res, next) => {
     } catch (err) {
         console.error("GetCustomerTransaction Error: ", err);
         return next(err);
+    }
+}
+
+exports.downloadCustomerTransactions = async (req, res, next) => {
+    try {
+        const customerId = req.params.customerId;
+        const assetId = req.params.assetId;
+        let filename = "transactions.csv";
+        let transactions = [];
+
+        const reservations = await Reservation.findAll({
+            where:
+            {
+                [Op.and]: [{ assetId, customerId }]
+            }
+        });
+
+        const asset = await Asset.findByPk(assetId);
+
+        if (!reservations) {
+            return next(new AppError('Customer has no transaction', 400));
+        }
+
+        for (let reservation of reservations) {
+            let transaction = await Transaction.find({
+                where: {
+                    [Op.and]:
+                    {
+                        reservation: reservation.id,
+                        customerId,
+                    }
+                }
+            });
+
+            transactions.push(...transaction);
+        }
+
+        transactions.sort(function (a, b) {
+            // Turn your strings into dates, and then subtract them
+            // to get a value that is either negative, positive, or zero.
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        let resp = {
+            code: 200,
+            status: 'success',
+            message: 'Transactions returned successfully',
+            data: {
+                asset,
+                transaction: transactions
+            }
+        }
+
+        res.status(resp.code).json(resp);
+        
+
+        // attempt to return downloadable file
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment;filename=${filename}`);
+        res.csv(transactions, true);
+        
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Download Customer Transaction Error: ', error);
+        return next(error);
     }
 }

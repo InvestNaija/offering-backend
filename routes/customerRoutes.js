@@ -43,4 +43,6 @@ router.post('/mini-signup', customer.miniSignup)
 
 router.get('/asset/first-transaction/:id', auth.customerAuth, customer.getFirstTransactionForAsset)
 
+router.get('/download/cscs', auth.adminAuth, customer.downloadPendingCSCSRegistration)
+
 module.exports = router;
