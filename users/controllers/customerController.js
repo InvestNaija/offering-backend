@@ -1492,8 +1492,8 @@ exports.getFirstTransactionForAsset = async (req, res, next) => {
 
 exports.downloadPendingCSCSRegistration = async (req, res, next) => {
     try {
-        const customers = [];
-        const filename = "customers.csv";
+        let customers = [];
+        let filename = "customers.csv";
 
         customers = await Customer.findAll({where: {cscsVerified: false}});
 
