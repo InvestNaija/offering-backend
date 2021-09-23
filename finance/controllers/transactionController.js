@@ -833,8 +833,7 @@ exports.downloadCustomerTransactions = async (req, res, next) => {
             }
         }
 
-        res.status(resp.code).json(resp);
-        
+        //res.status(resp.code).json(resp);  
 
         // attempt to return downloadable file
         res.setHeader('Content-Type', 'text/csv');

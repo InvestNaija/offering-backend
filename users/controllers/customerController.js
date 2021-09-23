@@ -1495,7 +1495,7 @@ exports.downloadPendingCSCSRegistration = async (req, res, next) => {
         let customers = [];
         let filename = "customers.csv";
 
-        customers = await Customer.findAll({where: {cscsVerified: false}});
+        const retrievedCustomers = await Customer.findAll({where: {cscsVerified: false}});
 
         let resp = {
             code: 200,
@@ -1504,7 +1504,14 @@ exports.downloadPendingCSCSRegistration = async (req, res, next) => {
             data: customers
         }
 
-        res.status(resp.code).json(resp)
+        for (const customer of retrievedCustomers) {
+            delete customer.dataValues.password;
+            delete customer.dataValues.id;
+            delete customer.dataValues.accountType;
+            delete customer.dataValues.description;
+            
+            customers.push(customer.dataValues);
+        }
 
         res.setHeader('Content-Type', 'text/csv')
         res.setHeader('Content-Disposition', `attachment;filename=${filename}`)
