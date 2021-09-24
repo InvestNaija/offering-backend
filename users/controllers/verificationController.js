@@ -306,3 +306,29 @@ exports.updateCSCSNoVerification = async (req, res, next) => {
         return next(err);
     }
 }
+
+exports.cscsCallback = async (req, res, next) => {
+    try {
+        let {referenceID, CHNNumber, AccountNumber, StatusMessage} = req.body;
+
+        await Customer.update({
+            chn: CHNNumber,
+            cscs: AccountNumber,
+            cscsRequestStatus: 'requested',
+            cscsVerified: true,
+        }, {where: {cscsRef: referenceID}});
+
+        let resp = {
+            response_code: 200,
+            response_message: "Request Accepted"
+        };
+
+        res.status(resp.response_code).json(resp);
+
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('CSCS Callback: ', error);
+        return next(error);
+    }
+}
