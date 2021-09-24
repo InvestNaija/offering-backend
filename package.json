@@ -12,7 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^16.4.10",
+    "@types/express": "^4.17.13",
+    "@types/node": "^16.9.6",
     "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "chd-session-mgt": "^1.0.0",

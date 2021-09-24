@@ -864,6 +864,10 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
             return next(new AppError('Asset has no transactions', 400));
         }
 
+        let query = {
+
+        };
+
         for (const reservation of reservations) {
             let transaction = await Transaction.findAll({
                 where: {

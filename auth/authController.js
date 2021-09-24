@@ -211,16 +211,26 @@ exports.createRole = async (req, res, next) => {
 exports.getRoles = async (req, res, next) => {
     try {
         let roles = await Role.findAll();
+        let data = {};
 
         if (!roles) {
             roles = [];
+        }
+
+        for (const role of roles) {
+            if (data[role.dataValues.module]) {
+                data[role.dataValues.module].push(role.dataValues);
+            } else {
+                data[role.dataValues.module] = [];
+                data[role.dataValues.module].push(role.dataValues);
+            }
         }
 
         let resp = {
             code: 200,
             status: 'success',
             message: 'Roles retrieved successfully',
-            data: roles
+            data
         }
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
