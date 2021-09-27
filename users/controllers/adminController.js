@@ -109,10 +109,10 @@ exports.fetch = async(req, res, next) => {
         if (id) {
             admin = await Admin.findOne({
                 where: {id},
-                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob'],
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'dob'],
                 include: {
                     model: roles,
-                    attributes: ['module', 'permission'],
+                    attributes: ['id', 'module', 'permission'],
                     through: {
                         attributes: []
                     }
@@ -126,10 +126,10 @@ exports.fetch = async(req, res, next) => {
             resp.data = admin;
         } else {
             admins = await Admin.findAll({
-                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob'],
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'dob'],
                 include: {
                     model: roles,
-                    attributes: ['module', 'permission'],
+                    attributes: ['id', 'module', 'permission'],
                     through: {
                         attributes: []
                     }
