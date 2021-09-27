@@ -95,13 +95,39 @@ exports.update = async(req, res, next) => {
 exports.fetch = async(req, res, next) => {
     try {
         let {id} = req.query;
-        if(!id) return next(new AppError('id required', 400));
-        const admin = await Admin.findByPk(id);
-        if(!admin) return next(new AppError('admin not found', 404));
-        res.status(200).json({
-            status: 'success',
-            data: admin
-        })
+        let admin;
+        let admins = [];
+        let resp = {
+            code: 200,
+            status: '',
+            message: '',
+            data: {}
+        }
+
+        // if(!id) return next(new AppError('id required', 400));
+        if (id) {
+            admin = await Admin.findByPk(id);
+            if(!admin) return next(new AppError('admin not found', 404));
+
+            resp.code = 200;
+            resp.status = 'success';
+            resp.message = 'Admin retrieved successfully';
+            resp.data = admin;
+        } else {
+            admins = await Admin.findAll({
+                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob']
+            });
+
+            resp.code = 200;
+            resp.status = 'success';
+            resp.message = 'Admin retrieved successfully';
+            resp.data = admins;
+        }
+
+        
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
     } catch (error) {
         return next(error);
     }
