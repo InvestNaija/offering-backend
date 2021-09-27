@@ -8,6 +8,7 @@ const cloudinary = require('../../config/cloudinary');
 const Admin_Roles = db.Admin_Roles;
 const sendEmail = require("../../config/email");
 const moment = require("moment");
+const { roles } = require('../../models/index');
 
 exports.signup = async(req, res, next) => {
     try {
@@ -106,7 +107,17 @@ exports.fetch = async(req, res, next) => {
 
         // if(!id) return next(new AppError('id required', 400));
         if (id) {
-            admin = await Admin.findByPk(id);
+            admin = await Admin.findOne({
+                where: {id},
+                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob'],
+                include: {
+                    model: roles,
+                    attributes: ['module', 'permission'],
+                    through: {
+                        attributes: []
+                    }
+                }
+            });
             if(!admin) return next(new AppError('admin not found', 404));
 
             resp.code = 200;
@@ -115,9 +126,17 @@ exports.fetch = async(req, res, next) => {
             resp.data = admin;
         } else {
             admins = await Admin.findAll({
-                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob']
+                attributes: ['firstName', 'lastName', 'email', 'phone', 'dob'],
+                include: {
+                    model: roles,
+                    attributes: ['module', 'permission'],
+                    through: {
+                        attributes: []
+                    }
+                }
             });
 
+            
             resp.code = 200;
             resp.status = 'success';
             resp.message = 'Admin retrieved successfully';

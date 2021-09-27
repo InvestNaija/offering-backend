@@ -593,7 +593,13 @@ exports.walletFundingFlutterwaveWebhook = async (req, res, next) => {
             status: "success",
             message: 'Wallet funding callback endpoint hit',
         }
-        res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
+
+        if (req.query.redirectUrl) {
+            res.redirect(`${req.query.redirectUrl}`);
+        } else {
+            res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
+        }
+        
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let {tx_ref, transaction_id} = req.query;

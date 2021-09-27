@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const Admin_Roles = sequelize.define('admin_roles', {
+    const admin_roles = sequelize.define('admin_roles', {
         adminId: {
             allowNull: false,
             primaryKey: true,
@@ -16,5 +16,5 @@ module.exports = (sequelize, Sequelize) => {
         timestamps: true,
     })
 
-    return Admin_Roles;
+    return admin_roles;
 }
