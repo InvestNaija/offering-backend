@@ -5,7 +5,7 @@ const auth = require('../../auth/authController');
 const Admin = db.admins;
 const Role = db.roles;
 const cloudinary = require('../../config/cloudinary');
-const Admin_Roles = db.Admin_Roles;
+const admin_roles = db.admin_roles;
 const sendEmail = require("../../config/email");
 const moment = require("moment");
 const { roles } = require('../../models/index');
@@ -38,7 +38,7 @@ exports.login = async(req, res, next) => {
         let roles = [];
         if(!email || !password) return next(new AppError('email and password required', 400));
         const user = await Admin.findOne({where: {email}});
-        const adminRole = await Admin_Roles.findAll({where: {adminId: user.id}});
+        const adminRole = await admin_roles.findAll({where: {adminId: user.id}});
 
         for (const item of adminRole) {
             const roleValue = await Role.findByPk(item.roleId);
@@ -266,7 +266,7 @@ exports.assignToRole = async (req, res, next) => {
                 return next(new AppError('Role does not exist', 400));
             }
 
-            newAdminRole = await Admin_Roles.create({adminId, roleId: foundRole.id});
+            newAdminRole = await admin_roles.create({adminId, roleId: foundRole.id});
         }
 
         let resp = {
@@ -288,9 +288,16 @@ exports.assignToRole = async (req, res, next) => {
 
 exports.createAdminUser = async (req, res, next) => {
     try {
-        let {firstname, lastname, phone, email, dob, roles} = req.body;
+        let {firstname, lastname, phone, email, dob, addRoles, removeRoles} = req.body;
 
         let request = ['firstname', 'lastname', 'email', 'phone', 'dob'];
+
+        let resp = {
+            code: 200,
+            status: '',
+            message: '',
+            data: {}
+        };
 
         for (let i = 0; i < request.length; i++) {
             if (!req.body[request[i]] || req.body[request[i]] === "") {
@@ -302,24 +309,34 @@ exports.createAdminUser = async (req, res, next) => {
 
         const newAdminUser = await Admin.create({email, firstName: firstname, lastName: lastname, dob, phone});
 
-        if (newAdminUser && roles) {
+        if (newAdminUser && addRoles) {
             // add admin to role
-            for (const role of roles) {
+            for (const role of addRoles) {
                 const foundRole = await Role.findByPk(role.roleId);
 
                 if (!foundRole) {
                     return next(new AppError('Role does not exist', 400));
                 }
 
-                const newAdminRole = await Admin_Roles.create({adminId: newAdminUser.id, roleId: foundRole.id});
+                const newAdminRole = await admin_roles.create({adminId: newAdminUser.id, roleId: foundRole.id});
             }
-        }
 
-        let resp = {
-            code: 201,
-            status: 'success',
-            message: 'Admin created and added to role successfully',
-            data: newAdminUser,
+            resp.code = 201;
+            resp.status = 'success';
+            resp.message = 'Admin added to role successfully';
+            resp.data = newAdminUser
+        } 
+        
+        if (newAdminUser && removeRoles) {
+            // remove admin from roles
+            for (const role of removeRoles) {
+                await admin_roles.destroy({where: {roleId: role.roleId}});
+            }
+
+            resp.code = 204;
+            resp.status = 'success';
+            resp.message = 'Admin removed from role successfully';
+            resp.data = newAdminUser
         }
 
         res.status(resp.code).json(resp);
