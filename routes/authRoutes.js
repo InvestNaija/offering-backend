@@ -15,7 +15,7 @@ router.post('/customers/change-password', auth.customerAuth, customer.changePass
 
 router.post('/admins/signup', admin.signup)
 router.post('/admins/login', admin.login)
-router.post('/admins/update', auth.adminAuth, admin.update)
+router.put('/admins/update', auth.adminAuth, admin.update)
 router.get('/admins/fetch', auth.adminAuth, admin.fetch)
 router.post('/admins/change-password', auth.adminAuth, admin.changePassword)
 router.post('/admins/forgot-password', admin.forgotPassword)
