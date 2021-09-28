@@ -10,14 +10,14 @@ const sendEmail = require("../../config/email");
 const moment = require("moment");
 const { roles } = require('../../models/index');
 
-exports.signup = async(req, res, next) => {
+exports.signup = async (req, res, next) => {
     try {
-        let {email, password} = req.body;
-        if(!email || !password) return next(new AppError('email and password required', 400));
-        const emailExists = await Admin.findOne({where: {email}});
-        if(emailExists) return next(new AppError('A user is already signed up with this email', 409));
+        let { email, password } = req.body;
+        if (!email || !password) return next(new AppError('email and password required', 400));
+        const emailExists = await Admin.findOne({ where: { email } });
+        if (emailExists) return next(new AppError('A user is already signed up with this email', 409));
         let hash = bcrypt.hashSync(password, 12);
-        const admin = await Admin.create({email, password: hash});
+        const admin = await Admin.create({ email, password: hash });
         let resp = {
             code: 201,
             status: 'success',
@@ -32,22 +32,22 @@ exports.signup = async(req, res, next) => {
     }
 }
 
-exports.login = async(req, res, next) => {
+exports.login = async (req, res, next) => {
     try {
-        let {email, password} = req.body;
+        let { email, password } = req.body;
         let roles = [];
-        if(!email || !password) return next(new AppError('email and password required', 400));
-        const user = await Admin.findOne({where: {email}});
-        const adminRole = await admin_roles.findAll({where: {adminId: user.id}});
+        if (!email || !password) return next(new AppError('email and password required', 400));
+        const user = await Admin.findOne({ where: { email } });
+        const adminRole = await admin_roles.findAll({ where: { adminId: user.id } });
 
         for (const item of adminRole) {
             const roleValue = await Role.findByPk(item.roleId);
-            roles.push({module: roleValue.module, permission: roleValue.permission});
+            roles.push({ module: roleValue.module, permission: roleValue.permission });
         }
 
-        if(!user) return next(new AppError('User not found', 404));
+        if (!user) return next(new AppError('User not found', 404));
         const correctPassword = bcrypt.compareSync(password, user.password);
-        if(!correctPassword) return next(new AppError('Wrong password entered', 406));
+        if (!correctPassword) return next(new AppError('Wrong password entered', 406));
         let signature = {
             id: user.id,
             role: user.role,
@@ -71,21 +71,21 @@ exports.login = async(req, res, next) => {
     }
 }
 
-exports.update = async(req, res, next) => {
+exports.update = async (req, res, next) => {
     try {
         let id = req.query.id;
-        if(!id) return next(new AppError('id required', 400));
-        let {firstName, lastName, phone, country, dob, image} = req.body;
+        if (!id) return next(new AppError('id required', 400));
+        let { firstName, lastName, phone, country, dob, image } = req.body;
         dob = new Date(dob);
-        let update = {firstName, lastName, phone, country, dob};
-        await Admin.update(update, {where: {id}})
+        let update = { firstName, lastName, phone, country, dob };
+        await Admin.update(update, { where: { id } })
         res.status(200).json({
             status: 'success',
             message: 'Profile updated'
         })
-        if(image) {
+        if (image) {
             let response = await cloudinary.uploadImage(image);
-            if(response) await Admin.update({image: response.secure_url}, {id});
+            if (response) await Admin.update({ image: response.secure_url }, { id });
             console.log('image updated');
         }
     } catch (error) {
@@ -93,9 +93,9 @@ exports.update = async(req, res, next) => {
     }
 }
 
-exports.fetch = async(req, res, next) => {
+exports.fetch = async (req, res, next) => {
     try {
-        let {id} = req.query;
+        let { id } = req.query;
         let admin;
         let admins = [];
         let resp = {
@@ -108,7 +108,7 @@ exports.fetch = async(req, res, next) => {
         // if(!id) return next(new AppError('id required', 400));
         if (id) {
             admin = await Admin.findOne({
-                where: {id},
+                where: { id },
                 attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'dob'],
                 include: {
                     model: roles,
@@ -118,7 +118,7 @@ exports.fetch = async(req, res, next) => {
                     }
                 }
             });
-            if(!admin) return next(new AppError('admin not found', 404));
+            if (!admin) return next(new AppError('admin not found', 404));
 
             resp.code = 200;
             resp.status = 'success';
@@ -136,14 +136,14 @@ exports.fetch = async(req, res, next) => {
                 }
             });
 
-            
+
             resp.code = 200;
             resp.status = 'success';
             resp.message = 'Admin retrieved successfully';
             resp.data = admins;
         }
 
-        
+
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
         return next();
@@ -154,12 +154,12 @@ exports.fetch = async(req, res, next) => {
 
 exports.forgotPassword = async (req, res, next) => {
     try {
-        let {email, baseUrl} = req.body;
+        let { email, baseUrl } = req.body;
         let url = "";
-        const admin = await Admin.findOne({where: {email}});
+        const admin = await Admin.findOne({ where: { email } });
         if (!admin) return next(new AppError('Admin not found.', 404));
         let tokenStr = crypto.randomBytes(16).toString("hex");
-        const token = await Token.create({token: tokenStr, adminId: admin.id});
+        const token = await Token.create({ token: tokenStr, adminId: admin.id });
         if (!token) return next(new AppError('error creating password reset', 500));
 
         if (baseUrl) {
@@ -200,15 +200,15 @@ exports.resetPassword = async (req, res, next) => {
     try {
         let token = req.params.token;
         if (!token) return next(new AppError('token is required', 400));
-        let {password, confirmPassword} = req.body;
+        let { password, confirmPassword } = req.body;
         if (!password || !confirmPassword) return next(new AppError('password and confirmPassword is required', 400));
         if (password !== confirmPassword) return next(new AppError('password and confirmPassword do not match', 400));
-        const tokenExists = await Token.findOne({where: {token}});
+        const tokenExists = await Token.findOne({ where: { token } });
         if (!tokenExists || tokenExists.used) return next(new AppError('invalid or expired token', 401));
         let adminId = tokenExists.adminId;
         if (!adminId) return next(new AppError('invalid customer', 401));
         let hash = bcrypt.hashSync(password, 12);
-        await Admin.update({password: hash}, {where: {id: adminId}});
+        await Admin.update({ password: hash }, { where: { id: adminId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -225,13 +225,13 @@ exports.resetPassword = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
     try {
         let id = req.user.id
-        let {oldPassword, newPassword} = req.body;
+        let { oldPassword, newPassword } = req.body;
         if (!oldPassword || !newPassword) return next(new AppError('New and old passwords required', 406));
         const admin = await Admin.findByPk(id);
         const confirmedPassword = bcrypt.compareSync(oldPassword, admin.password);
         if (!confirmedPassword) return next(new AppError('Incorrect old password entered', 401));
         let hash = bcrypt.hashSync(newPassword, 12);
-        await Admin.update({password: hash}, {where: {id}});
+        await Admin.update({ password: hash }, { where: { id } });
         let resp = {
             code: 200,
             status: 'success',
@@ -249,7 +249,8 @@ exports.changePassword = async (req, res, next) => {
 exports.assignToRole = async (req, res, next) => {
     try {
         let adminId = req.params.id;
-        let {roles} = req.body;
+        let { addRoles, removeRoles } = req.body;
+        let resp;
         let newAdminRole;
 
         const admin = await Admin.findByPk(adminId);
@@ -259,22 +260,39 @@ exports.assignToRole = async (req, res, next) => {
         }
 
         // add admin to roles
-        for (const role of roles) {
-            const foundRole = await Role.findByPk(role.roleId);
+        if (addRoles) {
+            for (const role of addRoles) {
+                const foundRole = await Role.findByPk(role.roleId);
 
-            if (!foundRole) {
-                return next(new AppError('Role does not exist', 400));
+                if (!foundRole) {
+                    return next(new AppError('Role does not exist', 400));
+                }
+
+                newAdminRole = await admin_roles.create({ adminId, roleId: foundRole.id });
             }
 
-            newAdminRole = await admin_roles.create({adminId, roleId: foundRole.id});
+            resp = {
+                code: 201,
+                status: 'success',
+                message: 'Admin added to role successfully',
+                data: newAdminRole,
+            };
         }
 
-        let resp = {
-            code: 201,
-            status: 'success',
-            message: 'User added to role successfully',
-            data: newAdminRole,
+        if (removeRoles) {
+            // remove admin from roles
+            for (const role of removeRoles) {
+                await admin_roles.destroy({ where: { roleId: role.roleId } });
+            }
+
+            resp = {
+                code: 204,
+                status: 'success',
+                message: 'Admin removed from role successfully',
+                data: newAdminRole,
+            };
         }
+
 
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
@@ -288,7 +306,7 @@ exports.assignToRole = async (req, res, next) => {
 
 exports.createAdminUser = async (req, res, next) => {
     try {
-        let {firstname, lastname, phone, email, dob, addRoles, removeRoles} = req.body;
+        let { firstname, lastname, phone, email, dob, addRoles, removeRoles } = req.body;
 
         let request = ['firstname', 'lastname', 'email', 'phone', 'dob'];
 
@@ -307,7 +325,7 @@ exports.createAdminUser = async (req, res, next) => {
 
         dob = moment(dob, "DD-MM-YYYY").format();
 
-        const newAdminUser = await Admin.create({email, firstName: firstname, lastName: lastname, dob, phone});
+        const newAdminUser = await Admin.create({ email, firstName: firstname, lastName: lastname, dob, phone });
 
         if (newAdminUser && addRoles) {
             // add admin to role
@@ -318,24 +336,12 @@ exports.createAdminUser = async (req, res, next) => {
                     return next(new AppError('Role does not exist', 400));
                 }
 
-                const newAdminRole = await admin_roles.create({adminId: newAdminUser.id, roleId: foundRole.id});
+                const newAdminRole = await admin_roles.create({ adminId: newAdminUser.id, roleId: foundRole.id });
             }
 
             resp.code = 201;
             resp.status = 'success';
             resp.message = 'Admin added to role successfully';
-            resp.data = newAdminUser
-        } 
-        
-        if (newAdminUser && removeRoles) {
-            // remove admin from roles
-            for (const role of removeRoles) {
-                await admin_roles.destroy({where: {roleId: role.roleId}});
-            }
-
-            resp.code = 204;
-            resp.status = 'success';
-            resp.message = 'Admin removed from role successfully';
             resp.data = newAdminUser
         }
 
