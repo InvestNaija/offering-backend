@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const db = require('../models/index');
 const Customer = db.customers;
 const Reservation = db.reservations;
+const Transaction = db.transactions;
 const Wallet = db.wallets;
 const Token = db.tokens;
 const cscs = require('./cscs');
@@ -82,5 +83,39 @@ exports.deleteUsedTokens = cron.schedule('45 * * * *', async()=>{
         }}})
     } catch (error) {
         console.error(error);
+    }
+})
+
+exports.updateTransactionsWithAssetId = cron.schedule('*/5 * * * *', async () => {
+    console.log('Running background job for updating assetId in transactions table');
+    try {
+        const transactions = await Transaction.findAll({
+            where: {
+                [Op.and]: [
+                    {
+                        reservation: {
+                            [Op.not]: null
+                        }
+                    },
+                    {
+                        assetId: {
+                            [Op.eq]: null
+                        }
+                    }
+                ]
+            }});
+
+        for (const transaction of transactions) {
+            let reservation = await Reservation.findByPk(transaction.reservation);
+            let assetId = reservation?.assetId;
+
+            if (assetId) {
+                await Transaction.update({assetId}, {where: {reservation: transaction.reservation}});
+            }            
+        }
+
+        console.log('Finished running background job to update assetId in transactions table');
+    } catch (error) {
+        console.error('Update Transactions with AssetId Error: ', error);
     }
 })
