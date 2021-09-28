@@ -307,6 +307,8 @@ exports.assignToRole = async (req, res, next) => {
 exports.createAdminUser = async (req, res, next) => {
     try {
         let { firstname, lastname, phone, email, dob, addRoles, removeRoles } = req.body;
+        let newAdminUser;
+        let adminId = req.query.id;
 
         let request = ['firstname', 'lastname', 'email', 'phone', 'dob'];
 
@@ -325,7 +327,11 @@ exports.createAdminUser = async (req, res, next) => {
 
         dob = moment(dob, "DD-MM-YYYY").format();
 
-        const newAdminUser = await Admin.create({ email, firstName: firstname, lastName: lastname, dob, phone });
+        if (adminId) {
+            await Admin.update({email, firstName: firstname, lastName: lastname, dob, phone}, {where: {id: adminId}});
+        } else {
+            newAdminUser = await Admin.create({ email, firstName: firstname, lastName: lastname, dob, phone });
+        }
 
         if (newAdminUser && addRoles) {
             // add admin to role
