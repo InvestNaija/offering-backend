@@ -58,7 +58,7 @@ db.kycDocuments = require('../users/models/kycDocuments')(sequelize, Sequelize);
 db.bvnData = require('../users/models/bvnData')(sequelize, Sequelize);
 db.assetsBankDetails = require('../asset/models/assetBankDetails')(sequelize, Sequelize);
 db.roles = require('../users/models/role')(sequelize, Sequelize);
-db.Admin_Roles = require('../users/models/admin_roles')(sequelize, Sequelize);
+db.admin_roles = require('../users/models/admin_roles')(sequelize, Sequelize);
 db.emailLogs = require('./email_log');
 
 db.wallets.belongsTo(db.customers, {
