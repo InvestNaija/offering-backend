@@ -306,7 +306,7 @@ exports.assignToRole = async (req, res, next) => {
 
 exports.createAdminUser = async (req, res, next) => {
     try {
-        let { firstname, lastname, phone, email, dob, addRoles, removeRoles } = req.body;
+        let { firstname, lastname, phone, email, dob, roles } = req.body;
 
         let request = ['firstname', 'lastname', 'email', 'phone', 'dob'];
 
@@ -327,9 +327,9 @@ exports.createAdminUser = async (req, res, next) => {
 
         const newAdminUser = await Admin.create({ email, firstName: firstname, lastName: lastname, dob, phone });
 
-        if (newAdminUser && addRoles) {
+        if (newAdminUser && roles) {
             // add admin to role
-            for (const role of addRoles) {
+            for (const role of roles) {
                 const foundRole = await Role.findByPk(role.roleId);
 
                 if (!foundRole) {
@@ -341,7 +341,7 @@ exports.createAdminUser = async (req, res, next) => {
 
             resp.code = 201;
             resp.status = 'success';
-            resp.message = 'Admin added to role successfully';
+            resp.message = 'Admin created and added to role successfully';
             resp.data = newAdminUser
         }
 
