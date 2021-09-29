@@ -10,11 +10,12 @@ const Asset = db.assets;
 const asset = require('../../asset/controllers/assetController');
 const help = require('../../config/helper');
 const sendEmail = require('../../config/email');
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
 const moment = require('moment');
 const utils = require('../../config/utils')
-const {getPagination, getPagingData} = require('../../config/pagination');
+const { getPagination, getPagingData } = require('../../config/pagination');
 const csv = require('csv-express');
+const customer = require('../../users/models/customer');
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -22,7 +23,7 @@ exports.transactionRequest = async (req, res, next) => {
         request.map(item => {
             if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
         })
-        let {amount, type, description, userId, reference, channel, source} = req.body;
+        let { amount, type, description, userId, reference, channel, source } = req.body;
         if (!Object.values(utils.TYPE).includes(type.toLowerCase())) return next(new AppError('invalid transaction type', 400));
         if (!Object.values(utils.SOURCE).includes(source.toLowerCase())) return next(new AppError('invalid transaction source', 400));
         if (!Object.values(utils.CHANNEL).includes(channel.toLowerCase())) return next(new AppError('invalid transaction channel', 400));
@@ -39,7 +40,7 @@ exports.transactionRequest = async (req, res, next) => {
 }
 
 exports.createTransaction = async (description, amount, type, user, brokerId, reservationId, gatewayReference,
-                                   source, channel, momoAgentId = null, module = null) => {
+    source, channel, momoAgentId = null, module = null) => {
     try {
         let transactionReference = help.generateOTCode(20, true);
 
@@ -158,18 +159,18 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
 
         res.locals.resp = resp;
         console.log("charge success callback hit...");
-        let {tx_ref, transaction_id} = req.query;
+        let { tx_ref, transaction_id } = req.query;
         const verified = await flutterwave.verifyTransaction(transaction_id);
         let transactionReference = verified.tx_ref;
-        const user = await Customer.findOne({where: {email: verified.customer.email}});
+        const user = await Customer.findOne({ where: { email: verified.customer.email } });
         if (!user) console.log('Error: User not found...');
         const [rows, [transaction]] = await Transaction.update({
             status: 'success',
             gatewayReference: transaction_id
-        }, {returning: true, where: {reference: tx_ref}});
+        }, { returning: true, where: { reference: tx_ref } });
         // console.log('transaction obj: ',transaction);
 
-        await Reservation.update({paid: true, status: "paid"}, {where: {id: transaction.dataValues.reservation}});
+        await Reservation.update({ paid: true, status: "paid" }, { where: { id: transaction.dataValues.reservation } });
         console.log('reservation updated')
         // *** notify customer on asset purchase
         let opts = {
@@ -203,7 +204,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
     try {
-        let {page, size} = req.query;
+        let { page, size } = req.query;
         let transactions = [];
         let reservationId = '';
         let assetId = '';
@@ -215,7 +216,7 @@ exports.getAll = async (req, res, next) => {
             page = 0;
         }
 
-        const {limit, offset} = getPagination(page, size);
+        const { limit, offset } = getPagination(page, size);
 
         transactions = await Transaction.findAndCountAll({
             limit,
@@ -232,11 +233,11 @@ exports.getAll = async (req, res, next) => {
             // check if we have already retrieved reservation id
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
-                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+                const reservation = await Reservation.findOne({ where: { id: transaction.reservation } });
                 // check if we have already retrieved asset id
                 if (reservation && (reservation.assetId !== assetId)) {
                     assetId = reservation.assetId;
-                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                    const asset = await Asset.findOne({ where: { id: reservation.assetId } });
                     if (asset) {
                         assetsData = asset.dataValues;
                         transaction.dataValues.asset = asset.dataValues;
@@ -249,7 +250,7 @@ exports.getAll = async (req, res, next) => {
             }
         }
 
-        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
+        let { data, totalItems, totalPages, currentPage } = getPagingData(transactions, page, limit);
 
         let resp = {
             code: 200,
@@ -273,7 +274,7 @@ exports.getMyTransactions = async (req, res, next) => {
     try {
         let customerId = req.user.id;
         let transactions = [];
-        let {channel, source, start, end, type, page, size} = req.query;
+        let { channel, source, start, end, type, page, size } = req.query;
 
         let query = {
             where: {
@@ -316,7 +317,7 @@ exports.getBrokersTransactions = async (req, res, next) => {
     try {
         let brokerId = req.user.id;
         const transactions = await Transaction.findAll({
-            where: {brokerId}, order: [
+            where: { brokerId }, order: [
                 ['createdAt', 'DESC']
             ]
         });
@@ -342,8 +343,8 @@ exports.getMyWalletBalance = async (req, res, next) => {
         if (req.user.role === 'customer') customerId = req.user.id;
         else if (req.user.role === 'broker') brokerId = req.user.id;
         let wallet;
-        if (customerId) wallet = await Wallet.findOne({where: {customerId}});
-        else wallet = await Wallet.findOne({where: {brokerId}});
+        if (customerId) wallet = await Wallet.findOne({ where: { customerId } });
+        else wallet = await Wallet.findOne({ where: { brokerId } });
         if (!wallet) return next(new AppError('Wallet not found', 404));
         const balance = wallet.balance;
         let resp = {
@@ -362,10 +363,10 @@ exports.getMyWalletBalance = async (req, res, next) => {
 
 exports.getFiltered = async (req, res, next) => {
     try {
-        let {filter} = req.query;
+        let { filter } = req.query;
         if (filter !== 'credit' && filter !== 'debit') return next(new AppError('Invalid filter parameter', 400));
         const transactions = await Transaction.findAll({
-            where: {type: filter}, order: [
+            where: { type: filter }, order: [
                 ['createdAt', 'DESC']
             ]
         });
@@ -384,27 +385,27 @@ exports.getFiltered = async (req, res, next) => {
 
 exports.getMyFilteredTransactions = async (req, res, next) => {
     try {
-        let {id} = req.user;
+        let { id } = req.user;
         console.log(id);
-        let {filter, start, end} = req.query;
+        let { filter, start, end } = req.query;
         if (!filter) return next(new AppError('filter is required', 400));
         if (filter != 'IPO' && filter != 'Investment' && filter != 'Wallet') return next(new AppError('Invalid filter parameter', 400));
         let transactions = [];
         if (filter == 'IPO') transactions = await Transaction.findAll({
-            where: {customerId: id, description: 'Shares Purchase'}, order: [
+            where: { customerId: id, description: 'Shares Purchase' }, order: [
                 ['createdAt', 'DESC']
             ]
         });
         else if (filter == 'Investment') transactions = await Transaction.findAll({
-            where: {customerId: id, description: 'Investment Cash Account Deposit'}, order: [
+            where: { customerId: id, description: 'Investment Cash Account Deposit' }, order: [
                 ['createdAt', 'DESC']
             ]
         });
         else transactions = await Transaction.findAll({
-                where: {customerId: id, description: 'Wallet Deposit'}, order: [
-                    ['createdAt', 'DESC']
-                ]
-            });
+            where: { customerId: id, description: 'Wallet Deposit' }, order: [
+                ['createdAt', 'DESC']
+            ]
+        });
         let resp = {
             code: 200,
             status: 'successs',
@@ -468,7 +469,7 @@ exports.tokenizedPayment = async (user, cardDetail, billTo, amount, reservation,
         tx.status = 'success';
         await Transaction.create(tx);
         if (reservation) {
-            await Reservation.update({paid: true, status: "paid"}, {where: {id: reservation}});
+            await Reservation.update({ paid: true, status: "paid" }, { where: { id: reservation } });
             console.log('reservation updated');
             let opts = {
                 email: user.email,
@@ -517,7 +518,7 @@ exports.encrypt = (req, res, next) => {
 
 exports.decrypt = (req, res, next) => {
     try {
-        let {data} = req.body;
+        let { data } = req.body;
         const response = accesspayment.decrypt(data);
         res.status(200).json({
             status: 'success',
@@ -530,8 +531,8 @@ exports.decrypt = (req, res, next) => {
 
 exports.fundWalletVNuban = async (req, res, next) => {
     try {
-        let {id} = req.user;
-        let {amount} = req.body;
+        let { id } = req.user;
+        let { amount } = req.body;
         if (!amount) return next(new AppError('amount is required', 400));
         const user = await Customer.findByPk(id);
         let obj = {
@@ -554,7 +555,7 @@ exports.fundWalletVNuban = async (req, res, next) => {
             data: vnubanResponse
         }
         res.status(resp.code).json(resp)
-        await Customer.update({accessAuditId: vnubanResponse.auditId}, {where: {id}});
+        await Customer.update({ accessAuditId: vnubanResponse.auditId }, { where: { id } });
         res.locals.resp = resp;
         return next();
     } catch (error) {
@@ -565,14 +566,14 @@ exports.fundWalletVNuban = async (req, res, next) => {
 exports.fundWalletFlutterwave = async (req, res, next) => {
     try {
         let id = req.user.id;
-        let {amount} = req.body;
+        let { amount } = req.body;
         if (!amount) return next(new AppError('amount is required', 400));
         const user = await Customer.findByPk(id);
         let callback_url = `${process.env.APPLICATION_BASE_URL}/api/v1/transactions/wallet/flutterwave/credit/success`;
         let description = 'Wallet Deposit';
         const chargeResponse = await this.initiateChargeCard(user, amount, description, null, callback_url, null);
         if (chargeResponse.status !== 'success') return next(new AppError('Error initializing transaction', 500));
-        let data = {authorization_url: chargeResponse.data.link};
+        let data = { authorization_url: chargeResponse.data.link };
         let resp = {
             code: 200,
             status: 'success',
@@ -599,19 +600,19 @@ exports.walletFundingFlutterwaveWebhook = async (req, res, next) => {
         } else {
             res.redirect(`${process.env.FRONTEND_URL}/user/dashboard/transactions/`);
         }
-        
+
         res.locals.resp = resp;
         console.log("charge success callback hit...");
-        let {tx_ref, transaction_id} = req.query;
+        let { tx_ref, transaction_id } = req.query;
         const verified = await flutterwave.verifyTransaction(transaction_id);
         let transactionReference = verified.tx_ref;
-        const user = await Customer.findOne({where: {email: verified.customer.email}});
+        const user = await Customer.findOne({ where: { email: verified.customer.email } });
         if (!user) console.log('Error: User not found...');
         const [rows, [transaction]] = await Transaction.update({
             status: 'success',
             gatewayReference: transaction_id
-        }, {returning: true, where: {reference: tx_ref}});
-        const wallet = await Wallet.findOne({where: {customerId: user.id}});
+        }, { returning: true, where: { reference: tx_ref } });
+        const wallet = await Wallet.findOne({ where: { customerId: user.id } });
         let balance = parseFloat(wallet.balance);
         let newBalance = balance + parseFloat(verified.amount);
         wallet.balance = newBalance;
@@ -651,23 +652,23 @@ exports.walletFundingVNubanWebhook = async (req, res, next) => {
         let data = req.body.data;
         let body = await accesspayment.decrypt(data);
         console.log(body);
-        const txRecorded = await Transaction.findOne({where: {gatewayReference: body.data.paymentReference}})
+        const txRecorded = await Transaction.findOne({ where: { gatewayReference: body.data.paymentReference } })
         if (txRecorded) {
             console.log('duplicate webhook call..');
             return;
         }
-        const user = await Customer.findOne({where: {accessAuditId: body.auditId}});
+        const user = await Customer.findOne({ where: { accessAuditId: body.auditId } });
         if (!user) {
             console.log('invalid audit id');
             return;
         }
-        const wallet = await Wallet.findOne({where: {customerId: user.id}});
+        const wallet = await Wallet.findOne({ where: { customerId: user.id } });
         if (body.status === 'SUCCESSFUL') {
             let balance = parseFloat(wallet.balance);
             let fundedAmount = parseFloat(body.data.paymentAmount);
             let newBalance = balance + fundedAmount;
             let description = 'Wallet Deposit';
-            await Wallet.update({balance: newBalance}, {where: {customerId: user.id}});
+            await Wallet.update({ balance: newBalance }, { where: { customerId: user.id } });
             await this.createTransaction(description, fundedAmount, 'credit', user, null, null, body.data.paymentReference, utils.SOURCE.WALLET, utils.CHANNEL.ACCESS);
         }
     } catch (error) {
@@ -681,13 +682,13 @@ exports.updateTransaction = async (req, res, next) => {
         let status = req.body.status;
         let updatedBy = req.user.id;
 
-        const transaction = await Transaction.findOne({where: {id}});
+        const transaction = await Transaction.findOne({ where: { id } });
 
         if (!transaction) {
             return next(new AppError(`Transaction id: ${id} not found.`, 404));
         }
 
-        await Transaction.update({status, updatedBy}, {where: {id}});
+        await Transaction.update({ status, updatedBy }, { where: { id } });
 
         let resp = {
             code: 200,
@@ -707,7 +708,7 @@ exports.getCustomerTransaction = async (req, res, next) => {
         let reservationId = '';
         let assetId = '';
         let assetsData = {};
-        let {page, size, channel, source, module, productType, processed, start, end, type} = req.query;
+        let { page, size, channel, source, module, productType, processed, start, end, type } = req.query;
 
         if (page && page >= 0) {
             page = page - 1;
@@ -715,7 +716,7 @@ exports.getCustomerTransaction = async (req, res, next) => {
             page = 0;
         }
 
-        const {limit, offset} = getPagination(page, size);
+        const { limit, offset } = getPagination(page, size);
 
         let query = {
             limit,
@@ -752,11 +753,11 @@ exports.getCustomerTransaction = async (req, res, next) => {
             // check if we have already retrieved reservation id
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
-                const reservation = await Reservation.findOne({where: {id: transaction.reservation}});
+                const reservation = await Reservation.findOne({ where: { id: transaction.reservation } });
                 // check if we have already retrieved asset id
                 if (reservation && (reservation.assetId !== assetId)) {
                     assetId = reservation.assetId;
-                    const asset = await Asset.findOne({where: {id: reservation.assetId}});
+                    const asset = await Asset.findOne({ where: { id: reservation.assetId } });
                     if (asset) {
                         assetsData = asset.dataValues;
                         transaction.dataValues.asset = asset.dataValues;
@@ -769,7 +770,7 @@ exports.getCustomerTransaction = async (req, res, next) => {
             }
         }
 
-        let {data, totalItems, totalPages, currentPage} = getPagingData(transactions, page, limit);
+        let { data, totalItems, totalPages, currentPage } = getPagingData(transactions, page, limit);
 
         let resp = {
             code: 200,
@@ -845,7 +846,7 @@ exports.downloadCustomerTransactions = async (req, res, next) => {
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment;filename=${filename}`);
         res.csv(transactions, true);
-        
+
         res.locals.resp = resp;
         return next();
     } catch (error) {
@@ -857,53 +858,109 @@ exports.downloadCustomerTransactions = async (req, res, next) => {
 exports.downloadTransactionsPerAsset = async (req, res, next) => {
     try {
         const assetId = req.params.id;
+        let {status, start, end, allotment} = req.query;
         let transactions = [];
+        let transRes = [];
+        let customerTransData = {};
         const filename = "transactions.csv";
 
-        let reservations = await Reservation.findAll({
-            where: {
-                assetId
-            }
-        });
+        const asset = await Asset.findByPk(assetId);
 
-        if (!reservations) {
-            return next(new AppError('Asset has no transactions', 400));
-        }
+        // let reservations = await Reservation.findAll({
+        //     where: {
+        //         assetId
+        //     }
+        // });
+
+        // if (!reservations) {
+        //     return next(new AppError('Asset has no transactions', 400));
+        // }
 
         let query = {
-
+            where: {
+                assetId
+            },
+            order: [
+                ['customerId', 'DESC'],
+                ['createdAt', 'DESC']
+            ]
         };
 
-        for (const reservation of reservations) {
-            let transaction = await Transaction.findAll({
-                where: {
-                    reservation: reservation.id
-                },
-                order: ['customerId'],
-                include: ['customer'],
-            })
+        if (status) {
+            query.where.status = status;
+        }
 
-            for (const item of transaction) {
-                delete item.dataValues.customerId;
+        if (start && end) {
+            if (!moment(start).isValid() || !moment(end).isValid()) return next(new AppError('Invalid date format', 400));
 
-                item.dataValues.customer = `${item.dataValues?.customer?.dataValues?.firstName} ${item.dataValues?.customer?.dataValues?.middleName} ${item.dataValues?.customer?.dataValues?.lastName}`;
-                transactions.push(item.dataValues);
+            start = new Date(start);
+            end = new Date(end);
+
+            query.where.createdAt = {
+                [Op.between]: [start, end]
             }
         }
+
+        transactions = await Transaction.findAll(query);
+
+        for (const transaction of transactions) {
+            let customerId = transaction.customerId;
+            if (transaction.customerId) {
+                if ((customerTransData[customerId]) && (transaction.status === 'success')) {
+                    customerTransData[customerId] += transaction.amount;
+                } 
+
+                if ((!customerTransData[customerId]) && (transaction.status === 'success')) {
+                    customerTransData[customerId] = transaction.amount;
+                }
+            }
+        }
+
+        for (let key in customerTransData) {
+            let data = {};
+            data["Asset Id"] = assetId;
+            data["Asset Name"] = asset.name;
+            
+            let customer = await Customer.findByPk(key);
+            data["Customer Id"] = customer.id;
+            data["Customer Name"] = `${customer.firstName} ${customer.middleName} ${customer.lastName}`;
+            data["Total Amount Paid"]= customerTransData[key];
+            data["Allotment"] = 0;
+            
+            transRes.push(data);
+        }
+
+        // for (const reservation of reservations) {
+        //     let transaction = await Transaction.findAll({
+        //         where: {
+        //             reservation: reservation.id
+        //         },
+        //         order: ['customerId'],
+        //         include: ['customer'],
+        //     })
+
+        //     for (const item of transaction) {
+        //         delete item.dataValues.customerId;
+
+        //         item.dataValues.customer = `${item.dataValues?.customer?.dataValues?.firstName} ${item.dataValues?.customer?.dataValues?.middleName} ${item.dataValues?.customer?.dataValues?.lastName}`;
+        //         transactions.push(item.dataValues);
+        //     }
+        // }
 
         let resp = {
             code: 200,
             status: 'success',
             message: 'Transactions retrieved successfully',
-            data: transactions
+            data: transRes
         }
 
         // attempt to return downloadable file
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment;filename=${filename}`);
-        res.csv(transactions, true);
-
         res.locals.resp = resp;
+        res.csv(transRes, true);
+
+        
         return next();
     } catch (error) {
         console.error('Download Transaction: ', error);
