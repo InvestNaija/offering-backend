@@ -16,6 +16,10 @@ const utils = require('../../config/utils')
 const { getPagination, getPagingData } = require('../../config/pagination');
 const csv = require('csv-express');
 const customer = require('../../users/models/customer');
+const formidable = require('formidable');
+const fs = require('fs');
+const csvParser = require('csv-parser');
+const Allotment = db.allotments;
 
 exports.transactionRequest = async (req, res, next) => {
     try {
@@ -863,6 +867,20 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         let transRes = [];
         let customerTransData = {};
         const filename = "transactions.csv";
+        
+        const lastAllotment = await Allotment.findAll({
+            limit: 1,
+            where: {
+                deletedAt: null,
+            },
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        });
+
+        if (!lastAllotment?.batch || lastAllotment?.batch === 0) {
+            const batchNumber = lastAllotment.batch;
+        }
 
         const asset = await Asset.findByPk(assetId);
 
@@ -918,14 +936,16 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
 
         for (let key in customerTransData) {
             let data = {};
-            data["Asset Id"] = assetId;
-            data["Asset Name"] = asset.name;
+            data["asset id"] = assetId;
+            data["asset Name"] = asset.name;
+            data["batch"] = batchNumber;
+            data["share price"] = asset.sharePrice;
             
             let customer = await Customer.findByPk(key);
-            data["Customer Id"] = customer.id;
-            data["Customer Name"] = `${customer.firstName} ${customer.middleName} ${customer.lastName}`;
-            data["Total Amount Paid"]= customerTransData[key];
-            data["Allotment"] = 0;
+            data["customer id"] = customer.id;
+            data["customer name"] = `${customer.firstName} ${customer.middleName} ${customer.lastName}`;
+            data["total amount paid"]= customerTransData[key];
+            data["allotment"] = 0;
             
             transRes.push(data);
         }
@@ -964,6 +984,62 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         return next();
     } catch (error) {
         console.error('Download Transaction: ', error);
+        return next(error);
+    }
+}
+
+exports.uploadAllotments = async (req, res, next) => {
+    try {
+        const form = new formidable({multiples: true});
+        let upload;
+        let allotmentData = [];
+        let assetId;
+
+        form.on('file', (name, file) => {
+            upload = file;
+        }).on('end', async () => {
+            if (!upload) {
+                return next(new AppError('Allotment document required', 400));
+            }
+
+            let fileUpload = fs.createReadStream(upload.path);
+            fileUpload.pipe(csvParser())
+                .on('data', function (row) {
+                    if (!row.batch || !row["asset id"] || !row["asset Name"] || !row["share price"]
+                        || !row["customer id"] || !row["customer name"] || !row["total amount paid"]
+                        || !row["allotment"]) {
+                        fileUpload.destroy();  
+                        return next(new AppError('Invalid data structure... Please re-upload', 400));
+                    }
+
+                    let newData = {
+                        batch: row.batch,
+                        customerName: row["customer name"],
+                        assetName: row["asset Name"],
+                        sharePrice: row["share price"],
+                        allotedUnits: row["allotment"],
+                        customerTotalPurchase: row["total amount paid"],
+                        customerId: row["customer id"],
+                        assetId: row["asset id"]
+                    }
+                    allotmentData.push(newData);
+                })
+                .on('end', async () => {
+                    let resp = {
+                        code: 200,
+                        status: 'success',
+                        message: 'Allotment file uploaded successfully'
+                    };
+
+                    res.status(resp.code).json(resp)
+                    await Allotment.bulkCreate(allotmentData);
+                })
+
+                res.locals.resp = resp;
+                return next();
+        })
+    } catch (error) {
+        console.error('Upload Allotments Error: ', error);
         return next(error);
     }
 }

@@ -41,4 +41,6 @@ router.get('/asset/:assetId/transactions/customer/:customerId', auth.adminAuth, 
 
 router.get('/asset/:id', auth.adminAuth, transaction.downloadTransactionsPerAsset);
 
+router.post('/allotments', auth.adminAuth, transaction.uploadAllotments)
+
 module.exports = router;
