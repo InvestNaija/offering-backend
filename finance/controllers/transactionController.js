@@ -937,7 +937,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         for (let key in customerTransData) {
             let data = {};
             data["asset id"] = assetId;
-            data["asset Name"] = asset.name;
+            data["asset name"] = asset.name;
             data["batch"] = batchNumber;
             data["share price"] = asset.sharePrice;
             
@@ -1005,7 +1005,7 @@ exports.uploadAllotments = async (req, res, next) => {
             let fileUpload = fs.createReadStream(upload.path);
             fileUpload.pipe(csvParser())
                 .on('data', function (row) {
-                    if (!row.batch || !row["asset id"] || !row["asset Name"] || !row["share price"]
+                    if (!row.batch || !row["asset id"] || !row["asset name"] || !row["share price"]
                         || !row["customer id"] || !row["customer name"] || !row["total amount paid"]
                         || !row["allotment"]) {
                         fileUpload.destroy();  
@@ -1015,7 +1015,7 @@ exports.uploadAllotments = async (req, res, next) => {
                     let newData = {
                         batch: row.batch,
                         customerName: row["customer name"],
-                        assetName: row["asset Name"],
+                        assetName: row["asset name"],
                         sharePrice: row["share price"],
                         allotedUnits: row["allotment"],
                         customerTotalPurchase: row["total amount paid"],
