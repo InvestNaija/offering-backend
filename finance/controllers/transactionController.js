@@ -866,6 +866,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         let transactions = [];
         let transRes = [];
         let customerTransData = {};
+        let batchNumber;
         const filename = "transactions.csv";
         
         const lastAllotment = await Allotment.findAll({
@@ -879,7 +880,9 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         });
 
         if (!lastAllotment?.batch || lastAllotment?.batch === 0) {
-            const batchNumber = lastAllotment.batch;
+            batchNumber = lastAllotment.batch;
+        } else {
+            batchNumber = 0;
         }
 
         const asset = await Asset.findByPk(assetId);
@@ -938,7 +941,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
             let data = {};
             data["asset id"] = assetId;
             data["asset name"] = asset.name;
-            data["batch"] = batchNumber;
+            data["batch"] = ++batchNumber;
             data["share price"] = asset.sharePrice;
             
             let customer = await Customer.findByPk(key);
