@@ -15,7 +15,7 @@ app.listen(PORT, () => {
 
 // jobs.checkCSCSCreation.start();
 // jobs.checkCSCSCreation.start();
-// jobs.updateTransactionsWithAssetId.start();
+jobs.updateTransactionsWithAssetId.start();
 
 process.on('uncaughtException', err => {
     console.log('Uncaught Exception!! Shutting down process..', err.name, err.message, err.stack);

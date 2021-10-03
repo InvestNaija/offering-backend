@@ -86,7 +86,7 @@ exports.deleteUsedTokens = cron.schedule('45 * * * *', async()=>{
     }
 })
 
-exports.updateTransactionsWithAssetId = cron.schedule('*/5 * * * *', async () => {
+exports.updateTransactionsWithAssetId = cron.schedule('0,10,20,30,40,50 * * * *', async () => {
     console.log('Running background job for updating assetId in transactions table');
     try {
         const transactions = await Transaction.findAll({
