@@ -51,6 +51,11 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
         },
 
+        paymentDate: {
+            type: Sequelize.DATE,
+            defaultValue: null
+        },
+
         momoAgentId: Sequelize.STRING,
     }, {
         timestamps: true,
