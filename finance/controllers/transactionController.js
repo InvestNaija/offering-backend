@@ -195,7 +195,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
                     <td>${transaction.description}</td>
                 </tr>
             </table>
-            <p>Your allotment is being processed and would be completed shortly.</p>
+            <p>Your allotment is being processed and would be notified once this process is completed completed.</p>
             <p>For further enquiries, please send an <a href = "mailto: ${process.env.MAILTO_ADDRESS}">email</a> to ${process.env.MAILTO_ADDRESS} or call ${process.env.PHONENUMBER}.</p>
             `
         }
