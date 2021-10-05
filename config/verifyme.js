@@ -29,7 +29,7 @@ exports.verifyNIN = async (nin, firstname, lastname) => {
             url: `https://vapi.verifyme.ng/v1/verifications/identities/nin/${nin}`,
             method: 'POST',
             headers: postHeaders,
-            timeout: 1500,
+            timeout: 2000,
             data: JSON.stringify(body)
         })
         return response.data;
@@ -443,7 +443,7 @@ exports.verifyBVN = async (bvn, firstname, lastname) => {
             url,
             method: 'POST',
             headers: postHeaders,
-            timeout: 1500,
+            timeout: 2000,
             data: JSON.stringify(body)
         });
 
@@ -509,7 +509,7 @@ exports.verifyNUBAN = async (bankCode, accountNumber) => {
         const response = await axios.request({
             url: `https://vapi.verifyme.ng/v1/banks/${bankCode}/accounts/${accountNumber}`,
             headers: getHeaders,
-            timeout: 1500,
+            timeout: 2000,
             method: 'GET'
         });
 
