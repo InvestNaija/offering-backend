@@ -155,16 +155,17 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
             message: 'Share callback endpoint hit',
         }
 
-        if (req.query.redirectUrl) {
-            res.redirect(`${req.query.redirectUrl}`);
-        } else {
-            res.redirect(`${process.env.FRONTEND_URL}/dashboard/transactions/`);
-        }
-
         res.locals.resp = resp;
         console.log("charge success callback hit...");
         let { tx_ref, transaction_id } = req.query;
         const verified = await flutterwave.verifyTransaction(transaction_id);
+
+        if (req.query.redirectUrl) {
+            res.redirect(`${req.query.redirectUrl}?status=${verified.status}&amount=${verified.amount}&name=${verified.customer.name}`);
+        } else {
+            res.redirect(`${process.env.FRONTEND_URL}/dashboard/transactions?status=${verified.status}&amount=${verified.amount}&name=${verified.customer.name}`);
+        }
+
         let transactionReference = verified.tx_ref;
         const user = await Customer.findOne({ where: { email: verified.customer.email } });
         if (!user) console.log('Error: User not found...');
