@@ -206,9 +206,9 @@ exports.verifyNUBAN = async (req, res, next) => {
 
         verifyMeResponse = await verifyme.verifyNUBAN(bank_code, nuban);
 
-        if (verifyMeResponse.status !== 'success') {
+        if (verifyMeResponse?.status !== 'success') {
             flutterWaveResponse = await flutterwave.verifyAccount(nuban, bank_code);
-            if (flutterWaveResponse.status !== 'success') {
+            if (flutterWaveResponse?.status !== 'success') {
                 return next(new AppError(flutterWaveResponse.message, flutterWaveResponse.statusCode));
             } else {
                 response = flutterWaveResponse;
@@ -221,7 +221,7 @@ exports.verifyNUBAN = async (req, res, next) => {
         let resp = {
             code: 200,
             status: 'success',
-            data: response.data
+            data: response?.data
         }
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
