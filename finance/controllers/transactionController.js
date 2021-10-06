@@ -236,7 +236,10 @@ exports.getAll = async (req, res, next) => {
 
         for (const transaction of transactions.rows) {
             // check if we have already retrieved reservation id
-            transaction.dataValues.customer = `${transaction.dataValues.customer.firstName} ${transaction.dataValues.customer.middleName} ${transaction.dataValues.customer.lastName}`;
+            if (transaction.dataValues?.customer) {
+                transaction.dataValues.customer = `${transaction.dataValues?.customer?.firstName} ${transaction.dataValues?.customer?.middleName} ${transaction.dataValues?.customer?.lastName}`;
+            } 
+            
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
                 const reservation = await Reservation.findOne({ where: { id: transaction.reservation } });
