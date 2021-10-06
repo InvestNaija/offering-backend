@@ -61,6 +61,7 @@ db.roles = require('../users/models/role')(sequelize, Sequelize);
 db.admin_roles = require('../users/models/admin_roles')(sequelize, Sequelize);
 db.emailLogs = require('./email_log');
 db.allotments = require('../finance/models/allotment')(sequelize, Sequelize);
+db.receiving_agent_companies = require('../users/models/receiving_agent_company')(sequelize, Sequelize);
 
 db.wallets.belongsTo(db.customers, {
     foreignKey: "customerId",
@@ -143,6 +144,11 @@ db.admins.belongsToMany(db.roles, {
 
 db.roles.belongsToMany(db.admins, {
     through: 'admin_roles'
+})
+
+db.brokers.belongsTo(db.receiving_agent_companies, {
+    foreignKey: "receivingAgentCompanyId",
+    as: "receivingAgentCompany"
 })
 
 db.sequelize.authenticate().then(() => console.log('PstgrsDb connected....')).catch(err => console.log('Error connecting to pstgrsDb...', err))

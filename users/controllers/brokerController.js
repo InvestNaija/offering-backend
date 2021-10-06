@@ -8,6 +8,7 @@ const helper = require('../../config/helper');
 const Wallet = db.wallets;
 const Token = db.tokens;
 const sendEmail = require('../../config/email');
+const form = require('formidable');
 
 exports.create = async(req, res, next) => {
     try {
@@ -249,6 +250,18 @@ exports.fetch = async(req, res, next) => {
         res.locals.resp = resp;
         return next();
     } catch (error) {
+        return next(error);
+    }
+}
+
+exports.uploadInstitutions = async (req, res, next) => {
+    try {
+        const form = new formidable({multiples: true});
+        let upload;
+        let insitutionsData = [];
+        
+    } catch (error) {
+        console.error('Broker Upload Institutions Error: ', error);
         return next(error);
     }
 }
