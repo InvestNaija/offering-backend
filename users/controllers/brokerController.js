@@ -9,21 +9,24 @@ const Wallet = db.wallets;
 const Token = db.tokens;
 const sendEmail = require('../../config/email');
 const form = require('formidable');
+const fs = require('fs');
+const csvParser = require('csv-parser');
+const ReceivingAgentCompany = db.receiving_agent_companies;
 
-exports.create = async(req, res, next) => {
+exports.create = async (req, res, next) => {
     try {
         let request = ['name', 'email', 'phone', 'address'];
         request.map(item => {
-            if(!req.body[item]) return next(new AppError(`${item} is required`, 400));
+            if (!req.body[item]) return next(new AppError(`${item} is required`, 400));
         })
         request.push('type');
         let data = _.pick(req.body, request);
-        const emailExists = await Broker.findOne({where: {email: data.email}});
-        if(emailExists) return next(new AppError('A user is already signed up with this email', 409));
+        const emailExists = await Broker.findOne({ where: { email: data.email } });
+        if (emailExists) return next(new AppError('A user is already signed up with this email', 409));
         let password = helper.generateOTCode(8, true);
         data.password = bcrypt.hashSync(password, 12);
         const broker = await Broker.create(data);
-        await Wallet.create({brokerId: broker.id});
+        await Wallet.create({ brokerId: broker.id });
         let resp = {
             code: 201,
             status: 'success',
@@ -32,7 +35,7 @@ exports.create = async(req, res, next) => {
         }
         res.status(resp.code).json(resp)
         res.locals.resp = resp;
-        
+
         let opts = {
             email: broker.email,
             subject: 'Account created',
@@ -52,14 +55,14 @@ exports.create = async(req, res, next) => {
     }
 }
 
-exports.login = async(req, res, next) => {
+exports.login = async (req, res, next) => {
     try {
-        let {email, password} = req.body;
-        if(!email || !password) return next(new AppError('email and password required', 400));
-        const user = await Broker.findOne({where: {email}});
-        if(!user) return next(new AppError('User not found', 404));
+        let { email, password } = req.body;
+        if (!email || !password) return next(new AppError('email and password required', 400));
+        const user = await Broker.findOne({ where: { email } });
+        if (!user) return next(new AppError('User not found', 404));
         const correctPassword = bcrypt.compareSync(password, user.password);
-        if(!correctPassword) return next(new AppError('Wrong password entered', 406));
+        if (!correctPassword) return next(new AppError('Wrong password entered', 406));
         let signature = {
             id: user.id,
             role: user.role,
@@ -81,16 +84,16 @@ exports.login = async(req, res, next) => {
     }
 }
 
-exports.changePassword = async(req, res, next) => {
+exports.changePassword = async (req, res, next) => {
     try {
         let brokerId = req.user.id
-        let {oldPassword, newPassword} = req.body;
-        if(!oldPassword || !newPassword) return next( new AppError('New and old passwords required', 406));
+        let { oldPassword, newPassword } = req.body;
+        if (!oldPassword || !newPassword) return next(new AppError('New and old passwords required', 406));
         const broker = await Broker.findByPk(brokerId);
         const correctPassword = bcrypt.compareSync(oldPassword, broker.password);
-        if(!correctPassword) return next(new AppError('Incorrect old password entered', 401));
+        if (!correctPassword) return next(new AppError('Incorrect old password entered', 401));
         let hash = bcrypt.hashSync(newPassword, 12);
-        await Broker.update({password: hash, passwordUpdated: true}, {where: {id: broker.id}});
+        await Broker.update({ password: hash, passwordUpdated: true }, { where: { id: broker.id } });
         let resp = {
             code: 200,
             status: 'success',
@@ -104,14 +107,14 @@ exports.changePassword = async(req, res, next) => {
     }
 }
 
-exports.forgotPasswordBroker = async(req, res, next) => {
+exports.forgotPasswordBroker = async (req, res, next) => {
     try {
-        let {email} = req.body;
-        const user = await Broker.findOne({where: {email}});
-        if(!user) return next(new AppError('user not found.', 404));
+        let { email } = req.body;
+        const user = await Broker.findOne({ where: { email } });
+        if (!user) return next(new AppError('user not found.', 404));
         let str = crypto.randomBytes(16).toString("hex");
-        const token = await Token.create({token: str, brokerId: user.id});
-        if(!token) return next(new AppError('error creating password reset', 500));
+        const token = await Token.create({ token: str, brokerId: user.id });
+        if (!token) return next(new AppError('error creating password reset', 500));
         let url = `http://chapelhill.flexi.ng/auth/broker-reset-password?token-details=${token.token}`;
         let opts = {
             email: user.email,
@@ -121,7 +124,7 @@ exports.forgotPasswordBroker = async(req, res, next) => {
             <p><a href="${url}">Reset</a></p>
             `
         }
-        sendEmail(opts).then(r=>{
+        sendEmail(opts).then(r => {
             console.log('password reset email sent');
             let resp = {
                 code: 200,
@@ -131,7 +134,7 @@ exports.forgotPasswordBroker = async(req, res, next) => {
             res.status(resp.code).json(resp);
             res.locals.resp = resp;
             return next();
-        }).catch(err=>{
+        }).catch(err => {
             console.log('error sending password reset', err);
             return next(new AppError('Error sending password reset email. Please try again.', 500));
         })
@@ -140,19 +143,19 @@ exports.forgotPasswordBroker = async(req, res, next) => {
     }
 }
 
-exports.resetPassword = async(req, res, next) => {
+exports.resetPassword = async (req, res, next) => {
     try {
         let token = req.params.token;
-        if(!token) return next(new AppError('token is required', 400));
-        let {password, confirmPassword} = req.body;
-        if(!password || !confirmPassword) return next(new AppError('password and confirmPassword is required', 400));
-        if(password !== confirmPassword) return next(new AppError('password and confirmPassword do not match', 400));
-        const tokenExists = await Token.findOne({where: {token}});
-        if(!tokenExists || tokenExists.used) return next(new AppError('invalid or expired token', 401));
+        if (!token) return next(new AppError('token is required', 400));
+        let { password, confirmPassword } = req.body;
+        if (!password || !confirmPassword) return next(new AppError('password and confirmPassword is required', 400));
+        if (password !== confirmPassword) return next(new AppError('password and confirmPassword do not match', 400));
+        const tokenExists = await Token.findOne({ where: { token } });
+        if (!tokenExists || tokenExists.used) return next(new AppError('invalid or expired token', 401));
         let brokerId = tokenExists.brokerId;
-        if(!brokerId) return next(new AppError('invalid broker', 401));
+        if (!brokerId) return next(new AppError('invalid broker', 401));
         let hash = bcrypt.hashSync(password, 12);
-        await Customer.update({password: hash}, {where: {id: brokerId}});
+        await Customer.update({ password: hash }, { where: { id: brokerId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -166,12 +169,12 @@ exports.resetPassword = async(req, res, next) => {
     }
 }
 
-exports.edit = async(req, res, next) => {
+exports.edit = async (req, res, next) => {
     try {
         let brokerId = req.params.id;
         let request = ['name', 'email', 'phone'];
         let data = _.pick(req.body, request);
-        await Broker.update(data, {where: {id: brokerId}});
+        await Broker.update(data, { where: { id: brokerId } });
         let resp = {
             code: 200,
             status: 'success',
@@ -185,7 +188,7 @@ exports.edit = async(req, res, next) => {
     }
 }
 
-exports.getAll = async(req, res, next) => {
+exports.getAll = async (req, res, next) => {
     try {
         let brokers = await Broker.findAll();
         let resp = {
@@ -202,9 +205,9 @@ exports.getAll = async(req, res, next) => {
     }
 }
 
-exports.getNormalCount = async(req, res, next) => {
+exports.getNormalCount = async (req, res, next) => {
     try {
-        const count = await Broker.count({where: {type: 'normal'}});
+        const count = await Broker.count({ where: { type: 'normal' } });
         let resp = {
             code: 200,
             status: 'success',
@@ -219,9 +222,9 @@ exports.getNormalCount = async(req, res, next) => {
     }
 }
 
-exports.getMTNCount = async(req, res, next) => {
+exports.getMTNCount = async (req, res, next) => {
     try {
-        const count = await Broker.count({where: {type: 'mtn'}});
+        const count = await Broker.count({ where: { type: 'mtn' } });
         let resp = {
             code: 200,
             status: 'success',
@@ -236,7 +239,7 @@ exports.getMTNCount = async(req, res, next) => {
     }
 }
 
-exports.fetch = async(req, res, next) => {
+exports.fetch = async (req, res, next) => {
     try {
         let brokerId = req.params.id;
         const broker = await Broker.findByPk(brokerId);
@@ -256,10 +259,48 @@ exports.fetch = async(req, res, next) => {
 
 exports.uploadInstitutions = async (req, res, next) => {
     try {
-        const form = new formidable({multiples: true});
+        const form = new formidable({ multiples: true });
         let upload;
-        let insitutionsData = [];
-        
+        let institutionsData = [];
+
+        form.on('file', (name, file) => {
+            upload = file;
+        }).on('end', async () => {
+            if (!upload) {
+                return next(new AppError('Upload file is required', 400));
+            }
+
+            let fileUpload = fs.createReadStream(upload.path);
+            fileUpload.pipe(csvParser())
+                .on('data', function (row) {
+                    if (!row["Name"] || !row["Email"] || !row["Phone Number"] || !row["Organization Type"]) {
+                        fileUpload.destroy();
+                        return next(new AppError('Invalid data structure... Please re-upload', 400));
+                    }
+
+                    let newData = {
+                        name: row["Name"],
+                        email: row["Email"],
+                        phoneNumber: row["Phone Number"],
+                        organizationType: row["Organization Type"]
+                    };
+
+                    institutionsData.push(newData);
+                })
+                .on('end', async () => {
+                    let resp = {
+                        code: 200,
+                        status: 'success',
+                        message: 'File uploaded successfully'
+                    };
+
+                    res.status(resp.code).json(resp)
+                    await ReceivingAgentCompany.bulkCreate(institutionsData);
+                })
+
+            res.locals.resp = resp;
+            return next();
+        })
     } catch (error) {
         console.error('Broker Upload Institutions Error: ', error);
         return next(error);
