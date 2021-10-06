@@ -209,7 +209,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
 
 exports.getAll = async (req, res, next) => {
     try {
-        let { page, size } = req.query;
+        let { page, size, start, end } = req.query;
         let transactions = [];
         let reservationId = '';
         let assetId = '';
@@ -223,16 +223,28 @@ exports.getAll = async (req, res, next) => {
 
         const { limit, offset } = getPagination(page, size);
 
-        transactions = await Transaction.findAndCountAll({
+        let query = {
             limit,
             offset,
             distinct: true,
-            include: ['customer'],
-            order: [
-                ['status', 'DESC'],
-                ['createdAt', 'DESC']
-            ]
-        });
+            include: ['customer']
+        };
+
+        if (start && end) {
+            if (!moment(start).isValid() || !moment(end).isValid()) return next(new AppError('invalid date format', 400));
+            start = new Date(start);
+            end = new Date(end);
+            query.where.createdAt = {
+                [Op.between]: [start, end]
+            }
+        }
+
+        query.order = [
+            ['status', 'DESC'],
+            ['createdAt', 'DESC']
+        ];
+
+        transactions = await Transaction.findAndCountAll(query);
 
         for (const transaction of transactions.rows) {
             // check if we have already retrieved reservation id
@@ -312,6 +324,7 @@ exports.getMyTransactions = async (req, res, next) => {
         if (type) query.where.type = type
 
         transactions = await Transaction.findAll(query);
+
         let resp = {
             code: 200,
             status: "success",
@@ -764,6 +777,14 @@ exports.getCustomerTransaction = async (req, res, next) => {
 
         for (const transaction of transactions.rows) {
             // check if we have already retrieved reservation id
+            if (!transaction.dataValues?.customer?.firstName || !transaction.dataValues?.customer?.lastName) {
+                continue;
+            }
+
+            if (transaction.dataValues?.customer) {
+                transaction.dataValues.customer = `${transaction.dataValues?.customer?.firstName} ${transaction.dataValues?.customer?.middleName} ${transaction.dataValues?.customer?.lastName}`;
+            } 
+
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
                 const reservation = await Reservation.findOne({ where: { id: transaction.reservation } });
