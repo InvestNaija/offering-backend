@@ -236,6 +236,10 @@ exports.getAll = async (req, res, next) => {
 
         for (const transaction of transactions.rows) {
             // check if we have already retrieved reservation id
+            if (!transaction.dataValues?.customer?.firstName || !transaction.dataValues?.customer?.lastName) {
+                continue;
+            }
+
             if (transaction.dataValues?.customer) {
                 transaction.dataValues.customer = `${transaction.dataValues?.customer?.firstName} ${transaction.dataValues?.customer?.middleName} ${transaction.dataValues?.customer?.lastName}`;
             } 
