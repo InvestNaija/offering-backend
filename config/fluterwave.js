@@ -3,11 +3,11 @@ const AppError = require('./appError');
 const helper = require('./helper');
 
 const getHeaders = {
-    'Authorization': `Bearer ${process.env.FLUTTERWAVE_LIVE}`
+    'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET}`
 };
 
 const postHeaders = {
-    'Authorization': `Bearer ${process.env.FLUTTERWAVE_LIVE}`,
+    'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET}`,
     'Content-Type': 'application/json'
 };
 
