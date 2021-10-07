@@ -29,6 +29,7 @@ exports.intitializeTransaction = async(user, amount, callback_url, tx_ref) => {
             url: 'https://api.flutterwave.com/v3/payments',
             method: 'POST',
             headers: postHeaders,
+            timeout: 2000,
             data: payload
         })
         return response.data;
@@ -75,6 +76,7 @@ exports.initializeDollarTransaction = async (user, amount, redirect_url, tx_ref,
             url: 'https://api.flutterwave.com/v3/payments',
             method: 'POST',
             headers: postHeaders,
+            timeout: 2000,
             data: payload
         });
 
@@ -90,6 +92,7 @@ exports.verifyTransaction = async(ref) => {
         const response = await axios.request({
             url: `https://api.flutterwave.com/v3/transactions/${ref}/verify`,
             method: 'GET',
+            timeout: 2000,
             headers: getHeaders
         })
         return response.data.data;
@@ -103,6 +106,7 @@ exports.listBanks = async() => {
         const response = await axios.request({
             url: 'https://api.flutterwave.com/v3/banks/NG',
             method: 'GET',
+            timeout: 2000,
             headers: getHeaders
         })
         return response.data;
@@ -125,6 +129,7 @@ exports.verifyAccount = async(nuban, code) => {
                 'Authorization': `Bearer ${process.env.FLUTTERWAVE_LIVE}`,
                 'Content-Type': 'application/json'
             },
+            timeout: 2000,
             data: payload
         })
         return response.data;
@@ -141,6 +146,7 @@ exports.createRecipient = async(user) => {
             url: `https://api.flutterwave.com/v3/beneficiaries`,
             method: 'POST',
             headers: postHeaders,
+            timeout: 2000,
             data
         })
         return response.data;
@@ -155,7 +161,8 @@ exports.deleteRecipient = async(recipient_code) => {
         const response = await axios.request({
             url: `https://api.flutterwave.com/v3/beneficiaries/${recipient_code}`,
             method: 'DELETE',
-            headers: getHeaders
+            headers: getHeaders,
+            timeout: 2000
         })
         return response.data;
     } catch (error) {
@@ -171,7 +178,8 @@ exports.verifyBVN = async(bvn) => {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${process.env.FLUTTERWAVE_LIVE}`
-            }
+            },
+            timeout: 2000
         })
         return response.data;
     } catch (error) {
@@ -187,7 +195,8 @@ exports.initializeWithdrawal = async(data) => {
             url: `https://api.flutterwave.com/v3/transfers`,
             method: 'POST',
             headers: postHeaders,
-            data: post
+            data: post,
+            timeout: 2000
         })
         return response.data;
     } catch (error) {
