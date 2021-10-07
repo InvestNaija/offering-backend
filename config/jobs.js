@@ -32,7 +32,7 @@ exports.checkCSCSCreation = cron.schedule('*/15 * * * *', async()=>{
                 }
                 await Customer.update({cscs: response.cscsNo, cscsVerified: true, chn: response.CHN}, {where: {cscsRef: ref}});
                 let opts = {
-                    from: 'Invest Naija <hello@9id.com.ng>',
+                    from: `'Invest Naija ${process.env.EMAIL_ADDRESS}`,
                     email: refs[i].email,
                     subject: 'CSCS Account created',
                     message: `<p>Hello ${refs[i].firstName},</p>

@@ -15,6 +15,7 @@ app.listen(PORT, () => {
 
 // jobs.checkCSCSCreation.start();
 // jobs.checkCSCSCreation.start();
+jobs.deleteUsedTokens.start();
 jobs.updateTransactionsWithAssetId.start();
 
 process.on('uncaughtException', err => {
