@@ -167,7 +167,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
         }
 
         let transactionReference = verified.tx_ref;
-        
+
         const user = await Customer.findOne({ where: { email: verified.customer.email } });
         if (!user) console.log('Error: User not found...');
         const [rows, [transaction]] = await Transaction.update({
@@ -176,8 +176,32 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
         }, { returning: true, where: { reference: tx_ref } });
         // console.log('transaction obj: ',transaction);
 
-        const reservationDetails = await Reservation.findOne({where: {id: transaction?.dataValues?.reservation}});
-        await Transaction.update({assetId: reservationDetails.dataValues?.assetId}, {where: {reservation: reservationDetails.dataValues?.id}});
+        const reservationDetails = await Reservation.findOne({ where: { id: transaction?.dataValues?.reservation } });
+        await Transaction.update({ assetId: reservationDetails.dataValues?.assetId },
+            {
+                where:
+                {
+                    [Op.and]: [
+                        { reservation: reservationDetails.dataValues?.id },
+                        { reference: tx_ref }
+                    ]
+                }
+            });
+
+        if (verified?.status && verified?.status.includes("success")) {
+            let currentDate = new Date().toISOString();
+
+            await Transaction.update({ paymentDate: currentDate },
+                {
+                    where: {
+                        [Op.and]: [
+                            { reservation: reservationDetails.dataValues?.id },
+                            { reference: tx_ref }
+                        ]
+                    }
+                })
+        }
+
         await Reservation.update({ paid: true, status: "paid" }, { where: { id: transaction.dataValues.reservation } });
         console.log('reservation updated')
         // *** notify customer on asset purchase
@@ -257,8 +281,8 @@ exports.getAll = async (req, res, next) => {
 
             if (transaction.dataValues?.customer) {
                 transaction.dataValues.customer = `${transaction.dataValues?.customer?.firstName} ${transaction.dataValues?.customer?.middleName} ${transaction.dataValues?.customer?.lastName}`;
-            } 
-            
+            }
+
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
                 const reservation = await Reservation.findOne({ where: { id: transaction.reservation } });
@@ -786,7 +810,7 @@ exports.getCustomerTransaction = async (req, res, next) => {
 
             if (transaction.dataValues?.customer) {
                 transaction.dataValues.customer = `${transaction.dataValues?.customer?.firstName} ${transaction.dataValues?.customer?.middleName} ${transaction.dataValues?.customer?.lastName}`;
-            } 
+            }
 
             if (transaction.reservation !== reservationId) {
                 reservationId = transaction.reservation;
@@ -895,13 +919,13 @@ exports.downloadCustomerTransactions = async (req, res, next) => {
 exports.downloadTransactionsPerAsset = async (req, res, next) => {
     try {
         const assetId = req.params.id;
-        let {status, start, end, allotment} = req.query;
+        let { status, start, end, allotment } = req.query;
         let transactions = [];
         let transRes = [];
         let customerTransData = {};
         let batchNumber;
         const filename = "transactions.csv";
-        
+
         const lastAllotment = await Allotment.findAll({
             limit: 1,
             where: {
@@ -962,7 +986,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
             if (transaction.customerId) {
                 if ((customerTransData[customerId]) && (transaction.status === 'success')) {
                     customerTransData[customerId] += transaction.amount;
-                } 
+                }
 
                 if ((!customerTransData[customerId]) && (transaction.status === 'success')) {
                     customerTransData[customerId] = transaction.amount;
@@ -976,13 +1000,13 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
             data["asset name"] = asset.name;
             data["batch"] = ++batchNumber;
             data["share price"] = asset.sharePrice;
-            
+
             let customer = await Customer.findByPk(key);
             data["customer id"] = customer.id;
             data["customer name"] = `${customer.firstName} ${customer.middleName} ${customer.lastName}`;
-            data["total amount paid"]= customerTransData[key];
+            data["total amount paid"] = customerTransData[key];
             data["allotment"] = 0;
-            
+
             transRes.push(data);
         }
 
@@ -1016,7 +1040,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         res.locals.resp = resp;
         res.csv(transRes, true);
 
-        
+
         return next();
     } catch (error) {
         console.error('Download Transaction: ', error);
@@ -1026,7 +1050,7 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
 
 exports.uploadAllotments = async (req, res, next) => {
     try {
-        const form = new formidable({multiples: true});
+        const form = new formidable({ multiples: true });
         let upload;
         let allotmentData = [];
         let assetId;
@@ -1044,7 +1068,7 @@ exports.uploadAllotments = async (req, res, next) => {
                     if (!row.batch || !row["asset id"] || !row["asset name"] || !row["share price"]
                         || !row["customer id"] || !row["customer name"] || !row["total amount paid"]
                         || !row["allotment"]) {
-                        fileUpload.destroy();  
+                        fileUpload.destroy();
                         return next(new AppError('Invalid data structure... Please re-upload', 400));
                     }
 
@@ -1071,8 +1095,8 @@ exports.uploadAllotments = async (req, res, next) => {
                     await Allotment.bulkCreate(allotmentData);
                 })
 
-                res.locals.resp = resp;
-                return next();
+            res.locals.resp = resp;
+            return next();
         })
     } catch (error) {
         console.error('Upload Allotments Error: ', error);
