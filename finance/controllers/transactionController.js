@@ -167,6 +167,7 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
         }
 
         let transactionReference = verified.tx_ref;
+        
         const user = await Customer.findOne({ where: { email: verified.customer.email } });
         if (!user) console.log('Error: User not found...');
         const [rows, [transaction]] = await Transaction.update({
@@ -175,6 +176,8 @@ exports.sharePurchaseSuccessCallback = async (req, res, next) => {
         }, { returning: true, where: { reference: tx_ref } });
         // console.log('transaction obj: ',transaction);
 
+        const reservationDetails = await Reservation.findOne({where: {id: transaction?.dataValues?.reservation}});
+        await Transaction.update({assetId: reservationDetails.dataValues?.assetId}, {where: {reservation: reservationDetails.dataValues?.id}});
         await Reservation.update({ paid: true, status: "paid" }, { where: { id: transaction.dataValues.reservation } });
         console.log('reservation updated')
         // *** notify customer on asset purchase
