@@ -13,6 +13,10 @@ router.patch('/edit-profile/:id', auth.adminAuth, broker.edit)
 
 router.get('/fetch/:id', auth.adminAuth, broker.fetch)
 
-router.post('/upload-institutions', broker.uploadInstitutions)
+router.route('/upload-institutions')
+    .post(auth.adminAuth, broker.uploadInstitutions)
+    .get(auth.adminAuth, broker.fetchInstitutions)
+
+router.get('/institutions/:id', auth.adminAuth, broker.fetchInstitution)
 
 module.exports = router;

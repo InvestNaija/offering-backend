@@ -11,6 +11,7 @@ const sendEmail = require('../../config/email');
 const form = require('formidable');
 const fs = require('fs');
 const csvParser = require('csv-parser');
+const { getPagination, getPagingData } = require('../../config/pagination');
 const ReceivingAgentCompany = db.receiving_agent_companies;
 
 exports.create = async (req, res, next) => {
@@ -306,6 +307,69 @@ exports.uploadInstitutions = async (req, res, next) => {
         return next(error);
     }
 }
+
+exports.fetchInstitutions = async (req, res, next) => {
+    try {
+        let {page, size} = req.query;
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const {limit, offset} = getPagination(page, size);
+
+        const institutions = await ReceivingAgentCompany.findAndCountAll({
+            limit: 20,
+            offset: 20,
+            distinct: true
+        });
+
+        let {data, totalItems, totalPages, currentPage} = getPagingData(institutions, page, limit);
+
+        let resp = {
+            code: 200,
+            status: "success",
+            message: "All institutions fetched successfully",
+            data,
+            totalItems,
+            totalPages,
+            currentPage
+        };
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Fetch institutions error: ', error);
+        return next(error);
+    }
+}
+
+exports.fetchInstitution = async (req, res, next) => {
+    try {
+        let id = req.params.id;
+
+        const institution = await ReceivingAgentCompany.findByPk(id);
+
+        let resp = {
+            code: 200,
+            status: "success",
+            message: "Institution retrieved successfully",
+            data: institution
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Fetch institution error: ', error);
+        return next(error);
+    }
+}
+
+
 
 // exports.createCustomer = async(req, res, next) => {
 //     try {
