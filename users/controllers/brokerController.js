@@ -258,6 +258,33 @@ exports.fetch = async (req, res, next) => {
     }
 }
 
+exports.createInstitution = async (req, res, next) => {
+    try {
+        let {name, email, phoneNumber, organizationType} = req.body;
+
+        const institution = await ReceivingAgentCompany.create({
+            name,
+            email,
+            phoneNumber,
+            organizationType,
+        });
+
+        let resp = {
+            code: 201,
+            status: "success",
+            message: "Institution created successfully",
+            data: institution
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Create institution error: ', error);
+        return next(error);
+    }
+}
+
 exports.uploadInstitutions = async (req, res, next) => {
     try {
         const form = new formidable({ multiples: true });
