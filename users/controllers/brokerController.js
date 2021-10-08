@@ -13,6 +13,7 @@ const fs = require('fs');
 const csvParser = require('csv-parser');
 const { getPagination, getPagingData } = require('../../config/pagination');
 const ReceivingAgentCompany = db.receiving_agent_companies;
+const { generatePassword } = require('../../config/helper');
 
 exports.create = async (req, res, next) => {
     try {
@@ -260,7 +261,7 @@ exports.fetch = async (req, res, next) => {
 
 exports.createInstitution = async (req, res, next) => {
     try {
-        let {name, email, phoneNumber, organizationType} = req.body;
+        let { name, email, phoneNumber, organizationType } = req.body;
 
         const institution = await ReceivingAgentCompany.create({
             name,
@@ -278,6 +279,28 @@ exports.createInstitution = async (req, res, next) => {
 
         res.status(resp.code).json(resp);
         res.locals.resp = resp;
+
+
+        // generate password and send via email
+        let password = generatePassword(8, true, true);
+
+        let opts = {
+            email,
+            subject: 'Account Created',
+            message: `<p>Hello ${name},</p>
+                    <p>Your account has been successfully created.</p>
+                    <p>Username: <b>${email}</b></p>
+                    <p>Password: <b>${password}</b></p>
+                    <p>Kindly log in on the platform to change your password.</b></p>
+                    <p>Best Regards,</p>
+                    <p>The Invest Naija Team.</p>
+                    `
+        }
+        sendEmail(opts)
+            .then(r => console.log('Onboarding email sent to receiving agent: ' + email))
+            .catch(err => console.log('Error sending onboarding email to receiving agent.', err));
+        
+        
         return next();
     } catch (error) {
         console.error('Create institution error: ', error);
@@ -337,7 +360,7 @@ exports.uploadInstitutions = async (req, res, next) => {
 
 exports.fetchInstitutions = async (req, res, next) => {
     try {
-        let {page, size} = req.query;
+        let { page, size } = req.query;
 
         if (page && page >= 0) {
             page = page - 1;
@@ -345,7 +368,7 @@ exports.fetchInstitutions = async (req, res, next) => {
             page = 0;
         }
 
-        const {limit, offset} = getPagination(page, size);
+        const { limit, offset } = getPagination(page, size);
 
         const institutions = await ReceivingAgentCompany.findAndCountAll({
             limit: 20,
@@ -353,7 +376,7 @@ exports.fetchInstitutions = async (req, res, next) => {
             distinct: true
         });
 
-        let {data, totalItems, totalPages, currentPage} = getPagingData(institutions, page, limit);
+        let { data, totalItems, totalPages, currentPage } = getPagingData(institutions, page, limit);
 
         let resp = {
             code: 200,
@@ -395,7 +418,6 @@ exports.fetchInstitution = async (req, res, next) => {
         return next(error);
     }
 }
-
 
 
 // exports.createCustomer = async(req, res, next) => {
