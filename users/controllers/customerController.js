@@ -91,6 +91,9 @@ exports.signup = async (req, res, next) => {
         }
 
         // save customer to database
+        if (req.body?.bypassDND) {
+            post.bypassDND = req.body.bypassDND;
+        }
         const customer = await Customer.create(post);
 
         let resp = {

@@ -189,6 +189,10 @@ module.exports = (sequelize, Sequelize) => {
 
         placeOfBirth: {
             type: Sequelize.STRING
+        },
+
+        bypassDND: {
+            type: Sequelize.BOOLEAN
         }
     })
 
