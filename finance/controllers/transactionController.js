@@ -937,9 +937,9 @@ exports.downloadTransactionsPerAsset = async (req, res, next) => {
         });
 
         if (!lastAllotment?.batch || lastAllotment?.batch === 0) {
-            batchNumber = lastAllotment.batch;
+            batchNumber = 1;
         } else {
-            batchNumber = 0;
+            batchNumber = lastAllotment?.batch + 1;
         }
 
         const asset = await Asset.findByPk(assetId);
