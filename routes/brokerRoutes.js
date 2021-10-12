@@ -13,4 +13,14 @@ router.patch('/edit-profile/:id', auth.adminAuth, broker.edit)
 
 router.get('/fetch/:id', auth.adminAuth, broker.fetch)
 
+router.post('/upload-institutions', auth.adminAuth, broker.uploadInstitutions)
+
+router.get('/institutions/:id', auth.adminAuth, broker.fetchInstitution)
+
+router.route('/institutions')
+    .post(auth.adminAuth, broker.createInstitution)
+    .get(auth.adminAuth, broker.fetchInstitutions)
+
+// router.post('/customer', auth.brokerAuth, broker.createCustomer)
+
 module.exports = router;

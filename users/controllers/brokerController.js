@@ -253,6 +253,177 @@ exports.fetch = async(req, res, next) => {
     }
 }
 
+exports.createInstitution = async (req, res, next) => {
+    try {
+        let { name, email, phoneNumber, organizationType } = req.body;
+
+        const institution = await ReceivingAgentCompany.create({
+            name,
+            email,
+            phoneNumber,
+            organizationType,
+        });
+
+        let resp = {
+            code: 201,
+            status: "success",
+            message: "Institution created successfully",
+            data: institution
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+
+
+        // generate password and send via email
+        let password = generatePassword(8, true, true);
+
+        let opts = {
+            email,
+            subject: 'Account Created',
+            message: `<p>Hello ${name},</p>
+                    <p>Your account has been successfully created.</p>
+                    <p>Username: <b>${email}</b></p>
+                    <p>Password: <b>${password}</b></p>
+                    <p>Kindly log in on the platform to change your password.</b></p>
+                    <p>Best Regards,</p>
+                    <p>The Invest Naija Team.</p>
+                    `
+        }
+        sendEmail(opts)
+            .then(r => console.log('Onboarding email sent to receiving agent: ' + email))
+            .catch(err => console.log('Error sending onboarding email to receiving agent.', err));
+        
+        
+        return next();
+    } catch (error) {
+        console.error('Create institution error: ', error);
+        return next(error);
+    }
+}
+
+exports.uploadInstitutions = async (req, res, next) => {
+    try {
+        const form = new formidable({ multiples: true });
+        let upload;
+        let institutionsData = [];
+
+        form.on('file', (name, file) => {
+            upload = file;
+        }).on('end', async () => {
+            if (!upload) {
+                return next(new AppError('Upload file is required', 400));
+            }
+
+            let fileUpload = fs.createReadStream(upload.path);
+            fileUpload.pipe(csvParser())
+                .on('data', function (row) {
+                    if (!row["Name"] || !row["Email"] || !row["Phone Number"] || !row["Organization Type"]) {
+                        fileUpload.destroy();
+                        return next(new AppError('Invalid data structure... Please re-upload', 400));
+                    }
+
+                    let newData = {
+                        name: row["Name"],
+                        email: row["Email"],
+                        phoneNumber: row["Phone Number"],
+                        organizationType: row["Organization Type"]
+                    };
+
+                    institutionsData.push(newData);
+                })
+                .on('end', async () => {
+                    let resp = {
+                        code: 200,
+                        status: 'success',
+                        message: 'File uploaded successfully'
+                    };
+
+                    res.status(resp.code).json(resp)
+                    await ReceivingAgentCompany.bulkCreate(institutionsData);
+                })
+
+            res.locals.resp = resp;
+            return next();
+        })
+    } catch (error) {
+        console.error('Broker Upload Institutions Error: ', error);
+        return next(error);
+    }
+}
+
+exports.fetchInstitutions = async (req, res, next) => {
+    try {
+        let { page, size } = req.query;
+
+        if (page && page >= 0) {
+            page = page - 1;
+        } else {
+            page = 0;
+        }
+
+        const { limit, offset } = getPagination(page, size);
+
+        const institutions = await ReceivingAgentCompany.findAndCountAll({
+            limit: 20,
+            offset: 20,
+            distinct: true
+        });
+
+        let { data, totalItems, totalPages, currentPage } = getPagingData(institutions, page, limit);
+
+        let resp = {
+            code: 200,
+            status: "success",
+            message: "All institutions fetched successfully",
+            data,
+            totalItems,
+            totalPages,
+            currentPage
+        };
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Fetch institutions error: ', error);
+        return next(error);
+    }
+}
+
+exports.fetchInstitution = async (req, res, next) => {
+    try {
+        let id = req.params.id;
+
+        const institution = await ReceivingAgentCompany.findByPk(id);
+
+        let resp = {
+            code: 200,
+            status: "success",
+            message: "Institution retrieved successfully",
+            data: institution
+        }
+
+        res.status(resp.code).json(resp);
+        res.locals.resp = resp;
+        return next();
+    } catch (error) {
+        console.error('Fetch institution error: ', error);
+        return next(error);
+    }
+}
+
+exports.createCustomer = async (req, res, next) => {
+    try {
+        let body = ['firstName', 'lastName', 'middleName', 'email', 'password',
+                'dob', 'gender', 'phoneNumber', 'address', 'cscs', 'chn', '']
+    } catch (error) {
+        console.error('Create customer error: ', error);
+        return next(error);
+    }
+}
+
+
 // exports.createCustomer = async(req, res, next) => {
 //     try {
 //         let brokerId = req.user.id;
